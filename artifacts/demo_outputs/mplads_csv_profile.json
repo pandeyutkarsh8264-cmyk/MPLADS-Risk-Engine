@@ -1,0 +1,294 @@
+{
+  "file_info": {
+    "filename": "MPLADS.csv",
+    "file_size_bytes": 15796263,
+    "sha256": "aa1d0b7c9c6bbe014a1af772a22ab3dc0a6eb24d043695060abaa0f94333e413",
+    "total_rows": 60359,
+    "total_columns": 15,
+    "headers": [
+      "MP NAME",
+      "WORK",
+      "CATEGORY",
+      "STATE",
+      "CONSTITUENCY",
+      "IDA",
+      "CITY",
+      "WARD",
+      "BLOCK",
+      "VILLAGE",
+      "RECOMMENDED DATE",
+      "ALLOCATION AMOUNT",
+      "IDA APPROVAL",
+      "STATUS",
+      "HOUSE"
+    ]
+  },
+  "column_profiles": {
+    "MP NAME": {
+      "index": 0,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 633,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Manoj Rajoria",
+        "Mr Gopal Jee Thakur",
+        "Pradyut Bordoloi",
+        "Shri Bhartruhari Mahtab",
+        "Shivkumar Chanabasappa Udasi"
+      ]
+    },
+    "WORK": {
+      "index": 1,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 20735,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "NA - Installing community drinking water plants",
+        "NA - Street lights",
+        "NA - Construction of roads, link roads, pathways or any other road with or without drainage system",
+        "NA - Setting up public non-conventional energy plants",
+        "NA - Construction of boundary walls of existing public and community buildings"
+      ]
+    },
+    "CATEGORY": {
+      "index": 2,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 4,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Normal/Others",
+        "Repair and Renovation",
+        "Trust and Society",
+        "Bar and Associations"
+      ]
+    },
+    "STATE": {
+      "index": 3,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 33,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Rajasthan",
+        "Bihar",
+        "Assam",
+        "Odisha",
+        "Karnataka"
+      ]
+    },
+    "CONSTITUENCY": {
+      "index": 4,
+      "null_count": 5,
+      "null_pct": 0.01,
+      "non_null_count": 60354,
+      "unique_count": 456,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "KARAULI-DHOLPUR(SC)",
+        "DARBHANGA",
+        "NOWGONG",
+        "CUTTACK",
+        "HAVERI"
+      ]
+    },
+    "IDA": {
+      "index": 5,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 699,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "DISTRICT COLLECTOR DHOLPUR_IDA",
+        "DISTRICT MAGISTRATE DARBANGA_IDA",
+        "DEPUTY COMMISSIONER NOWGONG_IDA",
+        "DISTRICT COLLECTOR CUTTACK_IDA",
+        "DEPUTY COMMISSIONER HAVERI_IDA"
+      ]
+    },
+    "CITY": {
+      "index": 6,
+      "null_count": 46910,
+      "null_pct": 77.72,
+      "non_null_count": 13449,
+      "unique_count": 2140,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Dhaulpur",
+        "Benipur",
+        "Balurghat",
+        "Medinipur",
+        "Kharagpur"
+      ]
+    },
+    "WARD": {
+      "index": 7,
+      "null_count": 47078,
+      "null_pct": 78.0,
+      "non_null_count": 13281,
+      "unique_count": 4667,
+      "inferred_type": "string",
+      "numeric_parse_rate": 47.15,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Dhaulpur (M) - Ward No.10",
+        "Benipur (M) - Ward No. 07",
+        "Benipur (M) - Ward No. 29",
+        "Benipur (M) - Ward No. 10",
+        "Baidyanathpara (OG) - Ward No.25"
+      ]
+    },
+    "BLOCK": {
+      "index": 8,
+      "null_count": 14169,
+      "null_pct": 23.47,
+      "non_null_count": 46190,
+      "unique_count": 5965,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Rajakhera",
+        "Manigachhi",
+        "Sepau",
+        "Tardih",
+        "Darbhanga"
+      ]
+    },
+    "VILLAGE": {
+      "index": 9,
+      "null_count": 14165,
+      "null_pct": 23.47,
+      "non_null_count": 46194,
+      "unique_count": 29881,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Nadauli",
+        "Jagdishpur",
+        "Kaithri",
+        "Chandaur",
+        "Kotma"
+      ]
+    },
+    "RECOMMENDED DATE": {
+      "index": 10,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 280,
+      "inferred_type": "date",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 100.0,
+      "date_range": {
+        "min": "2023-04-26",
+        "max": "2024-03-04"
+      },
+      "samples": [
+        "2024-03-04",
+        "2024-03-03",
+        "2024-03-02",
+        "2024-03-01",
+        "2024-02-29"
+      ]
+    },
+    "ALLOCATION AMOUNT": {
+      "index": 11,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 3391,
+      "inferred_type": "numeric",
+      "numeric_parse_rate": 100.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "100000",
+        "487000",
+        "500000",
+        "300000",
+        "600000"
+      ]
+    },
+    "IDA APPROVAL": {
+      "index": 12,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 3,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Action Pending",
+        "Approved by IDA",
+        "Rejected by IDA"
+      ]
+    },
+    "STATUS": {
+      "index": 13,
+      "null_count": 811,
+      "null_pct": 1.34,
+      "non_null_count": 59548,
+      "unique_count": 4,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Unsanctioned",
+        "Ongoing",
+        "Sanctioned",
+        "Completed"
+      ]
+    },
+    "HOUSE": {
+      "index": 14,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 2,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Lok Sabha",
+        "Rajya Sabha"
+      ]
+    }
+  }
+}

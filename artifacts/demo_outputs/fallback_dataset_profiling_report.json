@@ -1,0 +1,368 @@
+{
+  "report_title": "Real MPLADS Fallback Dataset Initial Profiling Report (Step 2B)",
+  "generated_at": "2026-09-03T19:48:55",
+  "provenance": {
+    "source": "GitHub: Vonter/india-mplads-works",
+    "repository_url": "https://github.com/Vonter/india-mplads-works",
+    "official_source_site": "http://164.100.68.116/mpladssbi/Default.aspx",
+    "license": "Open Database License (ODbL) 1.0",
+    "stated_temporal_coverage": "1st April 2023 onwards (FY 2023-2024)",
+    "extraction_method": "Automated HTML scrape via fetch.py & flatten.py",
+    "status": "REAL FALLBACK SOURCE (Not Dataful 22567/22566/22565/18533)"
+  },
+  "file_metrics": {
+    "filename": "MPLADS.csv",
+    "file_size_bytes": 15796263,
+    "sha256": "aa1d0b7c9c6bbe014a1af772a22ab3dc0a6eb24d043695060abaa0f94333e413",
+    "delimiter": ";",
+    "row_count": 60359,
+    "column_count": 15,
+    "columns": [
+      "MP NAME",
+      "WORK",
+      "CATEGORY",
+      "STATE",
+      "CONSTITUENCY",
+      "IDA",
+      "CITY",
+      "WARD",
+      "BLOCK",
+      "VILLAGE",
+      "RECOMMENDED DATE",
+      "ALLOCATION AMOUNT",
+      "IDA APPROVAL",
+      "STATUS",
+      "HOUSE"
+    ]
+  },
+  "id_analysis": {
+    "work_identifier_field": "WORK (prefix before ' - ')",
+    "total_rows": 60359,
+    "unassigned_missing_id_count": 40245,
+    "unassigned_missing_id_percentage": 66.68,
+    "populated_work_id_count": 20114,
+    "populated_work_id_percentage": 33.32,
+    "distinct_unique_id_count": 20114,
+    "duplicate_id_count": 0,
+    "duplicate_id_percentage": 0.0,
+    "id_format_sample": "WS/MP179/2023-2024/119588"
+  },
+  "domain_field_mapping": {
+    "work_id": "WORK (prefix before ' - ')",
+    "work_description": "WORK (text after ' - ')",
+    "work_category": "CATEGORY ('Normal/Others', 'Repair and Renovation', 'Trust and Society', 'Bar and Associations')",
+    "state": "STATE (33 states/UTs)",
+    "constituency": "CONSTITUENCY (456 parliamentary constituencies)",
+    "district_or_agency": "IDA (Implementing District Authority, 699 authorities)",
+    "locality_context": [
+      "CITY",
+      "WARD",
+      "BLOCK",
+      "VILLAGE"
+    ],
+    "mp_name": "MP NAME (633 MPs across Lok Sabha and Rajya Sabha)",
+    "house": "HOUSE ('Lok Sabha', 'Rajya Sabha')",
+    "amount_recommended": "ALLOCATION AMOUNT (100% parseable, min 0, median 400,000, max 150,000,000)",
+    "date_recommended": "RECOMMENDED DATE (100% parseable YYYY-MM-DD, 2023-04-26 to 2024-03-04)",
+    "status": "STATUS ('Unsanctioned', 'Sanctioned', 'Completed', 'Ongoing')",
+    "approval_state": "IDA APPROVAL ('Action Pending', 'Approved by IDA', 'Rejected by IDA')"
+  },
+  "temporal_coverage": {
+    "min_date": "2023-04-26",
+    "max_date": "2024-03-04",
+    "duration_months": 10.5,
+    "period_bucket": "FY 2023-2024 (17th Lok Sabha Transition)"
+  },
+  "column_profiles": {
+    "MP NAME": {
+      "index": 0,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 633,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Manoj Rajoria",
+        "Mr Gopal Jee Thakur",
+        "Pradyut Bordoloi",
+        "Shri Bhartruhari Mahtab",
+        "Shivkumar Chanabasappa Udasi"
+      ]
+    },
+    "WORK": {
+      "index": 1,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 20735,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "NA - Installing community drinking water plants",
+        "NA - Street lights",
+        "NA - Construction of roads, link roads, pathways or any other road with or without drainage system",
+        "NA - Setting up public non-conventional energy plants",
+        "NA - Construction of boundary walls of existing public and community buildings"
+      ]
+    },
+    "CATEGORY": {
+      "index": 2,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 4,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Normal/Others",
+        "Repair and Renovation",
+        "Trust and Society",
+        "Bar and Associations"
+      ]
+    },
+    "STATE": {
+      "index": 3,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 33,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Rajasthan",
+        "Bihar",
+        "Assam",
+        "Odisha",
+        "Karnataka"
+      ]
+    },
+    "CONSTITUENCY": {
+      "index": 4,
+      "null_count": 5,
+      "null_pct": 0.01,
+      "non_null_count": 60354,
+      "unique_count": 456,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "KARAULI-DHOLPUR(SC)",
+        "DARBHANGA",
+        "NOWGONG",
+        "CUTTACK",
+        "HAVERI"
+      ]
+    },
+    "IDA": {
+      "index": 5,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 699,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "DISTRICT COLLECTOR DHOLPUR_IDA",
+        "DISTRICT MAGISTRATE DARBANGA_IDA",
+        "DEPUTY COMMISSIONER NOWGONG_IDA",
+        "DISTRICT COLLECTOR CUTTACK_IDA",
+        "DEPUTY COMMISSIONER HAVERI_IDA"
+      ]
+    },
+    "CITY": {
+      "index": 6,
+      "null_count": 46910,
+      "null_pct": 77.72,
+      "non_null_count": 13449,
+      "unique_count": 2140,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Dhaulpur",
+        "Benipur",
+        "Balurghat",
+        "Medinipur",
+        "Kharagpur"
+      ]
+    },
+    "WARD": {
+      "index": 7,
+      "null_count": 47078,
+      "null_pct": 78.0,
+      "non_null_count": 13281,
+      "unique_count": 4667,
+      "inferred_type": "string",
+      "numeric_parse_rate": 47.15,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Dhaulpur (M) - Ward No.10",
+        "Benipur (M) - Ward No. 07",
+        "Benipur (M) - Ward No. 29",
+        "Benipur (M) - Ward No. 10",
+        "Baidyanathpara (OG) - Ward No.25"
+      ]
+    },
+    "BLOCK": {
+      "index": 8,
+      "null_count": 14169,
+      "null_pct": 23.47,
+      "non_null_count": 46190,
+      "unique_count": 5965,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Rajakhera",
+        "Manigachhi",
+        "Sepau",
+        "Tardih",
+        "Darbhanga"
+      ]
+    },
+    "VILLAGE": {
+      "index": 9,
+      "null_count": 14165,
+      "null_pct": 23.47,
+      "non_null_count": 46194,
+      "unique_count": 29881,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Nadauli",
+        "Jagdishpur",
+        "Kaithri",
+        "Chandaur",
+        "Kotma"
+      ]
+    },
+    "RECOMMENDED DATE": {
+      "index": 10,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 280,
+      "inferred_type": "date",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 100.0,
+      "date_range": {
+        "min": "2023-04-26",
+        "max": "2024-03-04"
+      },
+      "samples": [
+        "2024-03-04",
+        "2024-03-03",
+        "2024-03-02",
+        "2024-03-01",
+        "2024-02-29"
+      ]
+    },
+    "ALLOCATION AMOUNT": {
+      "index": 11,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 3391,
+      "inferred_type": "numeric",
+      "numeric_parse_rate": 100.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "100000",
+        "487000",
+        "500000",
+        "300000",
+        "600000"
+      ]
+    },
+    "IDA APPROVAL": {
+      "index": 12,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 3,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Action Pending",
+        "Approved by IDA",
+        "Rejected by IDA"
+      ]
+    },
+    "STATUS": {
+      "index": 13,
+      "null_count": 811,
+      "null_pct": 1.34,
+      "non_null_count": 59548,
+      "unique_count": 4,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Unsanctioned",
+        "Ongoing",
+        "Sanctioned",
+        "Completed"
+      ]
+    },
+    "HOUSE": {
+      "index": 14,
+      "null_count": 0,
+      "null_pct": 0.0,
+      "non_null_count": 60359,
+      "unique_count": 2,
+      "inferred_type": "string",
+      "numeric_parse_rate": 0.0,
+      "date_parse_rate": 0.0,
+      "date_range": null,
+      "samples": [
+        "Lok Sabha",
+        "Rajya Sabha"
+      ]
+    }
+  },
+  "locked_engine_feasibility_assessment": {
+    "engine_1_peer_benchmarking": {
+      "status": "SUPPORTED",
+      "notes": "Cohorts constructible by STATE + IDA + CATEGORY + HOUSE. Robust median/IQR/percentile on ALLOCATION AMOUNT supported. Fallback hierarchy viable."
+    },
+    "engine_2_statistical_outliers": {
+      "status": "SUPPORTED (Financial/Scale signals only)",
+      "notes": "IQR bounds and scale ratios supported on ALLOCATION AMOUNT. Timing anomalies limited due to single date field."
+    },
+    "engine_3_financial_execution_mismatch": {
+      "status": "PARTIALLY SUPPORTED (Level 1 Proxy Only)",
+      "notes": "Level 1 proxy supported using STATUS and IDA APPROVAL against ALLOCATION AMOUNT. Level 1 observed expenditure, Level 2 elapsed duration vs completion, and Level 3 physical progress are UNAVAILABLE."
+    },
+    "engine_4_duplicate_overlap": {
+      "status": "SUPPORTED",
+      "notes": "Candidate blocking on STATE, CONSTITUENCY, IDA. Text similarity on WORK description. Entity matching on IDA and MP NAME."
+    },
+    "missing_required_evidence": [
+      "Completed works table (no separate amount_completed or date_of_completion)",
+      "Actual expenditure at work level",
+      "Physical progress percentage (never simulated per locked spec)",
+      "Vendor-level expenditure link"
+    ]
+  }
+}

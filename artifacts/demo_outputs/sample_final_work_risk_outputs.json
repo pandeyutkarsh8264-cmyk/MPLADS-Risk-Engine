@@ -1,0 +1,1109 @@
+[
+  {
+    "work_id": "WS/MP620/2024-2025/133166",
+    "risk_score": 23.0,
+    "risk_band": "LOW",
+    "evidence_coverage": {
+      "available_weight_pct": 100.0,
+      "modules_available": [
+        "peer_benchmarking",
+        "statistical_outliers",
+        "financial_execution_mismatch",
+        "duplicate_overlap"
+      ],
+      "modules_missing": [],
+      "available_weights": {
+        "peer_benchmarking": 0.3,
+        "statistical_outliers": 0.25,
+        "financial_execution_mismatch": 0.3,
+        "duplicate_overlap": 0.15
+      },
+      "sum_available_weight": 1.0,
+      "observed_vs_proxy": "fully_observed",
+      "has_completion_evidence": true,
+      "has_expenditure_evidence": true,
+      "mismatch_confidence_tier": "HIGH",
+      "level_3_physical_progress_available": false,
+      "physical_progress_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "module_scores": {
+      "peer_benchmarking": 25.38,
+      "statistical_outliers": 5.15,
+      "financial_execution_mismatch": 0.0,
+      "duplicate_overlap": 94.0
+    },
+    "evidence_items": [
+      {
+        "module": "peer_benchmarking",
+        "metric": "recommended_amount_vs_peer_median",
+        "observed_value": "\u20b9497,185",
+        "comparison_value": "\u20b9399,304",
+        "comparison_group": "Step 1: district_category_year (n=13)",
+        "explanation": "Recommended amount \u20b9497,185 evaluated at Level 1 (district_category_year, n=13). Cohort median: \u20b9399,304, IQR: \u20b997,311 (Q1: \u20b9398,009, Q3: \u20b9495,320). Work is at 88.5th percentile (1.2x peer median).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 25.38,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "COHORT_SIZE_13",
+          "PERCENTILE_88"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_recommended",
+        "observed_value": 497185.0,
+        "comparison_value": "mod_z=0.66",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_recommended sub-score: 8.3 (Modified Z=0.66).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 8.3,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_sanctioned",
+        "observed_value": 497185.0,
+        "comparison_value": "mod_z=0.66",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_sanctioned sub-score: 8.3 (Modified Z=0.66).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 8.31,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_to_rec_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_to_rec_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_delay_days",
+        "observed_value": null,
+        "comparison_value": "mod_z=1.14",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_delay_days sub-score: 14.3 (Modified Z=1.14).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 14.3,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "completed_cost_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature completed_cost_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "disbursed_to_sanction_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature disbursed_to_sanction_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "expenditure_completed_ongoing.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "milestone_financial_alignment",
+        "observed_value": "Physical Inspection",
+        "comparison_value": "Aligned",
+        "comparison_group": "statutory_milestones",
+        "explanation": "No financial, temporal, or status mismatches detected. Work milestones align.",
+        "source_dataset": "works_recommended.json + works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "NO_MISMATCH_DETECTED"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "level_3_physical_progress",
+        "observed_value": "UNAVAILABLE",
+        "comparison_value": "0% in public dataset",
+        "comparison_group": "authoritative_physical_progress",
+        "explanation": "Authoritative physical progress percentage does not exist in source data. Not inferred or fabricated.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "VERY HIGH",
+        "data_quality_flags": [
+          "LEVEL_3_PHYSICAL_PROGRESS_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_254661",
+        "observed_value": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math C",
+        "comparison_value": "Construction of Samudya Bhavan at Pry No 1 A near Shivanand Math of Navalgund TQ Belavatagi village ",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.881, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_298980",
+        "observed_value": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math C",
+        "comparison_value": "Construction of Community Bhavan at NavalgundTQ Belavatagi Village Pry No 2 near Ulavi Channabasaveshwar Temple Continue",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.843, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_292696",
+        "observed_value": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math C",
+        "comparison_value": "Construction of Cultural Bhavan Continue work at Navalgund TQ Datanal Village Pry No 69 near Shivlingeshwar Temple",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.836, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_310278",
+        "observed_value": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math C",
+        "comparison_value": "Construction of Community Bhavan at NavalgundTQ Morab Village Pry No 1123 ",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.821, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_277359",
+        "observed_value": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math C",
+        "comparison_value": "Construction of Community Bhavan at Dharwad TQ Garag Village Pry No.1 near Bakkayyan Math",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Possible overlap' (semantic cosine: 0.817, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 60.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": [
+          "CLASS_POSSIBLE_OVERLAP"
+        ]
+      }
+    ],
+    "investigation_actions": [
+      "Verify physical site and cross-reference work description (matched DTL ID(s): 254661, 298980) to confirm distinct asset creation.",
+      "Verify geographic boundary markers and landmark demarcation with local panchayat / municipal authority."
+    ],
+    "work_metadata": {
+      "work_recommendation_dtl_id": 133166,
+      "unique_work_number": "WS/MP620/2024-2025/133166",
+      "mp_name": "Pralhad Venkatesh Joshi",
+      "state": "Karnataka",
+      "constituency": "DHARWAD",
+      "district": "DHARWAD",
+      "category": "Normal/Others",
+      "work_description": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math Continue Work",
+      "work_stage": "Physical Inspection",
+      "amount_recommended": 497185.0,
+      "amount_sanctioned": 497185.0,
+      "amount_completed": 497185.0,
+      "total_disbursed_amount": 497185.0,
+      "is_completed": true,
+      "source_provenance": "18th_lok_sabha_mospi_api"
+    },
+    "sample_case_label": "Real Duplicate Candidate"
+  },
+  {
+    "work_id": "DTL_303957",
+    "risk_score": 84.85,
+    "risk_band": "CRITICAL",
+    "evidence_coverage": {
+      "available_weight_pct": 55.0,
+      "modules_available": [
+        "peer_benchmarking",
+        "statistical_outliers"
+      ],
+      "modules_missing": [
+        "financial_execution_mismatch",
+        "duplicate_overlap"
+      ],
+      "available_weights": {
+        "peer_benchmarking": 0.3,
+        "statistical_outliers": 0.25
+      },
+      "sum_available_weight": 0.55,
+      "observed_vs_proxy": "proxy_only",
+      "has_completion_evidence": false,
+      "has_expenditure_evidence": false,
+      "mismatch_confidence_tier": "NONE",
+      "level_3_physical_progress_available": false,
+      "physical_progress_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "module_scores": {
+      "peer_benchmarking": 100.0,
+      "statistical_outliers": 66.67,
+      "financial_execution_mismatch": null,
+      "duplicate_overlap": null
+    },
+    "evidence_items": [
+      {
+        "module": "peer_benchmarking",
+        "metric": "recommended_amount_vs_peer_median",
+        "observed_value": "\u20b999,965,000",
+        "comparison_value": "\u20b91,050,612",
+        "comparison_group": "Step 1: district_category_year (n=37)",
+        "explanation": "Recommended amount \u20b999,965,000 evaluated at Level 1 (district_category_year, n=37). Cohort median: \u20b91,050,612, IQR: \u20b9278,100 (Q1: \u20b9925,000, Q3: \u20b91,203,100). Work is at 98.7th percentile (95.2x peer median).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 100.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "COHORT_SIZE_37",
+          "PERCENTILE_99"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_recommended",
+        "observed_value": 99965000.0,
+        "comparison_value": "mod_z=358.67",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_recommended sub-score: 100.0 (Modified Z=358.67).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 100.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "EXTREME_MOD_Z"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_sanctioned",
+        "observed_value": 99965000.0,
+        "comparison_value": "mod_z=351.93",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_sanctioned sub-score: 100.0 (Modified Z=351.93).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 100.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "EXTREME_MOD_Z"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_to_rec_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_to_rec_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "execution_financial_evidence",
+        "observed_value": "Pending for Sanction",
+        "comparison_value": "None",
+        "comparison_group": "execution_milestones",
+        "explanation": "Financial-execution mismatch unavailable: work lacks sanction, completion, and expenditure evidence.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "NONE",
+        "data_quality_flags": [
+          "MISMATCH_DATA_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "level_3_physical_progress",
+        "observed_value": "UNAVAILABLE",
+        "comparison_value": "0% in public dataset",
+        "comparison_group": "authoritative_physical_progress",
+        "explanation": "Authoritative physical progress percentage does not exist in source data. Not inferred or fabricated.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "VERY HIGH",
+        "data_quality_flags": [
+          "LEVEL_3_PHYSICAL_PROGRESS_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "candidate_block_comparison",
+        "observed_value": "Construction of a Modern Indoor Stadium Badminton Court along with the Construction of Pickleball Co",
+        "comparison_value": "None",
+        "comparison_group": "contextual_candidate_block",
+        "explanation": "Duplicate detection unavailable: no other candidate works in contextual block.",
+        "source_dataset": "works_recommended.json",
+        "available": false,
+        "score": null,
+        "confidence": "NONE",
+        "data_quality_flags": [
+          "DUPLICATE_DATA_UNAVAILABLE"
+        ]
+      }
+    ],
+    "investigation_actions": [
+      "Review detailed project estimate and technical sanction to verify basis for recommended cost exceeding peer cohort norm.",
+      "Inspect comparable works in SARAN to assess whether site-specific terrain or scope justified higher allocation.",
+      "Audit sanction delay documentation to identify potential administrative or inter-departmental clearance bottlenecks.",
+      "Verify ratio of sanctioned to recommended cost against standard departmental schedule of rates (SoR)."
+    ],
+    "work_metadata": {
+      "work_recommendation_dtl_id": 303957,
+      "unique_work_number": null,
+      "mp_name": "Rajiv Pratap Rudy",
+      "state": "Bihar",
+      "constituency": "SARAN",
+      "district": "SARAN",
+      "category": "Normal/Others",
+      "work_description": "Construction of a Modern Indoor Stadium Badminton Court along with the Construction of Pickleball Court, Paddle Court and Cricket Net Practice near Amnour Community Centre",
+      "work_stage": "Pending for Sanction",
+      "amount_recommended": 99965000.0,
+      "amount_sanctioned": 99965000.0,
+      "amount_completed": null,
+      "total_disbursed_amount": null,
+      "is_completed": false,
+      "source_provenance": "18th_lok_sabha_mospi_api"
+    },
+    "sample_case_label": "Severe Peer Outlier (Two Modules Available)"
+  },
+  {
+    "work_id": "WS/MP620/2024-2025/133301",
+    "risk_score": 17.84,
+    "risk_band": "LOW",
+    "evidence_coverage": {
+      "available_weight_pct": 100.0,
+      "modules_available": [
+        "peer_benchmarking",
+        "statistical_outliers",
+        "financial_execution_mismatch",
+        "duplicate_overlap"
+      ],
+      "modules_missing": [],
+      "available_weights": {
+        "peer_benchmarking": 0.3,
+        "statistical_outliers": 0.25,
+        "financial_execution_mismatch": 0.3,
+        "duplicate_overlap": 0.15
+      },
+      "sum_available_weight": 1.0,
+      "observed_vs_proxy": "fully_observed",
+      "has_completion_evidence": true,
+      "has_expenditure_evidence": true,
+      "mismatch_confidence_tier": "HIGH",
+      "level_3_physical_progress_available": false,
+      "physical_progress_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "module_scores": {
+      "peer_benchmarking": 10.0,
+      "statistical_outliers": 2.36,
+      "financial_execution_mismatch": 0.0,
+      "duplicate_overlap": 95.0
+    },
+    "evidence_items": [
+      {
+        "module": "peer_benchmarking",
+        "metric": "recommended_amount_vs_peer_median",
+        "observed_value": "\u20b9398,009",
+        "comparison_value": "\u20b9399,304",
+        "comparison_group": "Step 1: district_category_year (n=13)",
+        "explanation": "Recommended amount \u20b9398,009 evaluated at Level 1 (district_category_year, n=13). Cohort median: \u20b9399,304, IQR: \u20b997,311 (Q1: \u20b9398,009, Q3: \u20b9495,320). Work is at 26.9th percentile (1.0x peer median).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 10.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "COHORT_SIZE_13",
+          "PERCENTILE_27"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_recommended",
+        "observed_value": 398009.0,
+        "comparison_value": "mod_z=0.31",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_recommended sub-score: 3.8 (Modified Z=0.31).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 3.84,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_sanctioned",
+        "observed_value": 398009.0,
+        "comparison_value": "mod_z=0.31",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_sanctioned sub-score: 3.9 (Modified Z=0.31).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 3.93,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_to_rec_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_to_rec_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_delay_days",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.51",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_delay_days sub-score: 6.4 (Modified Z=0.51).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 6.42,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "completed_cost_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature completed_cost_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "disbursed_to_sanction_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature disbursed_to_sanction_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "expenditure_completed_ongoing.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "milestone_financial_alignment",
+        "observed_value": "Physical Inspection",
+        "comparison_value": "Aligned",
+        "comparison_group": "statutory_milestones",
+        "explanation": "No financial, temporal, or status mismatches detected. Work milestones align.",
+        "source_dataset": "works_recommended.json + works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "NO_MISMATCH_DETECTED"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "level_3_physical_progress",
+        "observed_value": "UNAVAILABLE",
+        "comparison_value": "0% in public dataset",
+        "comparison_group": "authoritative_physical_progress",
+        "explanation": "Authoritative physical progress percentage does not exist in source data. Not inferred or fabricated.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "VERY HIGH",
+        "data_quality_flags": [
+          "LEVEL_3_PHYSICAL_PROGRESS_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_206381",
+        "observed_value": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+        "comparison_value": "Construction of Cultural Bhavan at Kundagal Taluk Yaraguppi Village Pry No 409",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.861, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_206428",
+        "observed_value": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+        "comparison_value": "Construction of Community Cultural Bhavan at Kundagal Taluk Ramankoppa Village Pry No 114 C near Kedarnath Temple",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.833, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_206397",
+        "observed_value": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+        "comparison_value": "Construction of Cultural Bhavan at Kundagal Taluk Basapur Village Pry No 73 near Maruti Temple",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.827, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_206383",
+        "observed_value": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+        "comparison_value": "Construction of Cultural Bhavan at Kundagol Taluk Sanklipur Village Pry No 77 3 near Gangamata Temple",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.823, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_206393",
+        "observed_value": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+        "comparison_value": "Construction of Cultural Bhavan at Kundagal Taluk Benakanhalli Village Pry No 133 near Basavanna Temple",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.822, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      }
+    ],
+    "investigation_actions": [
+      "Verify physical site and cross-reference work description (matched DTL ID(s): 206381, 206428) to confirm distinct asset creation.",
+      "Verify geographic boundary markers and landmark demarcation with local panchayat / municipal authority."
+    ],
+    "work_metadata": {
+      "work_recommendation_dtl_id": 133301,
+      "unique_work_number": "WS/MP620/2024-2025/133301",
+      "mp_name": "Pralhad Venkatesh Joshi",
+      "state": "Karnataka",
+      "constituency": "DHARWAD",
+      "district": "DHARWAD",
+      "category": "Normal/Others",
+      "work_description": "Construction of Cultural Bhavan at Kundagol TQ, Chickgungal Village ST Colony, Pry No.202",
+      "work_stage": "Physical Inspection",
+      "amount_recommended": 398009.0,
+      "amount_sanctioned": 398009.0,
+      "amount_completed": 398009.0,
+      "total_disbursed_amount": 398009.0,
+      "is_completed": true,
+      "source_provenance": "18th_lok_sabha_mospi_api"
+    },
+    "sample_case_label": "Completed Work with Joined Evidence"
+  },
+  {
+    "work_id": "WS/MP620/2025-2026/133167",
+    "risk_score": 10.36,
+    "risk_band": "LOW",
+    "evidence_coverage": {
+      "available_weight_pct": 85.0,
+      "modules_available": [
+        "peer_benchmarking",
+        "statistical_outliers",
+        "financial_execution_mismatch"
+      ],
+      "modules_missing": [
+        "duplicate_overlap"
+      ],
+      "available_weights": {
+        "peer_benchmarking": 0.3,
+        "statistical_outliers": 0.25,
+        "financial_execution_mismatch": 0.3
+      },
+      "sum_available_weight": 0.85,
+      "observed_vs_proxy": "proxy_only",
+      "has_completion_evidence": false,
+      "has_expenditure_evidence": false,
+      "mismatch_confidence_tier": "HIGH",
+      "level_3_physical_progress_available": false,
+      "physical_progress_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "module_scores": {
+      "peer_benchmarking": 10.0,
+      "statistical_outliers": 23.21,
+      "financial_execution_mismatch": 0.0,
+      "duplicate_overlap": null
+    },
+    "evidence_items": [
+      {
+        "module": "peer_benchmarking",
+        "metric": "recommended_amount_vs_peer_median",
+        "observed_value": "\u20b9500,000",
+        "comparison_value": "\u20b9950,000",
+        "comparison_group": "Step 3: state_category_year (n=10)",
+        "explanation": "Recommended amount \u20b9500,000 evaluated at Level 3 (state_category_year, n=10). Cohort median: \u20b9950,000, IQR: \u20b9500,000 (Q1: \u20b9500,000, Q3: \u20b91,000,000). Work is at 25.0th percentile (0.5x peer median).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 10.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": [
+          "COHORT_SIZE_10",
+          "PERCENTILE_25"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_recommended",
+        "observed_value": 500000.0,
+        "comparison_value": "mod_z=0.67",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_recommended sub-score: 8.4 (Modified Z=0.67).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 8.43,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_sanctioned",
+        "observed_value": 500000.0,
+        "comparison_value": "mod_z=0.67",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_sanctioned sub-score: 8.4 (Modified Z=0.67).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 8.43,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_to_rec_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_to_rec_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_delay_days",
+        "observed_value": null,
+        "comparison_value": "mod_z=5.25",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_delay_days sub-score: 76.0 (Modified Z=5.25).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 75.99,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "MOD_Z_OUTLIER"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "milestone_financial_alignment",
+        "observed_value": "Pending for Sanction",
+        "comparison_value": "Aligned",
+        "comparison_group": "statutory_milestones",
+        "explanation": "No financial, temporal, or status mismatches detected. Work milestones align.",
+        "source_dataset": "works_recommended.json + works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "NO_MISMATCH_DETECTED"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "level_3_physical_progress",
+        "observed_value": "UNAVAILABLE",
+        "comparison_value": "0% in public dataset",
+        "comparison_group": "authoritative_physical_progress",
+        "explanation": "Authoritative physical progress percentage does not exist in source data. Not inferred or fabricated.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "VERY HIGH",
+        "data_quality_flags": [
+          "LEVEL_3_PHYSICAL_PROGRESS_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "candidate_block_comparison",
+        "observed_value": "Construction of College room of  CBS Charitable Foudation at Nulvi Vilage Pry No 817/3 Continued wor",
+        "comparison_value": "None",
+        "comparison_group": "contextual_candidate_block",
+        "explanation": "Duplicate detection unavailable: no other candidate works in contextual block.",
+        "source_dataset": "works_recommended.json",
+        "available": false,
+        "score": null,
+        "confidence": "NONE",
+        "data_quality_flags": [
+          "DUPLICATE_DATA_UNAVAILABLE"
+        ]
+      }
+    ],
+    "investigation_actions": [
+      "Audit sanction delay documentation to identify potential administrative or inter-departmental clearance bottlenecks.",
+      "Verify ratio of sanctioned to recommended cost against standard departmental schedule of rates (SoR)."
+    ],
+    "work_metadata": {
+      "work_recommendation_dtl_id": 133167,
+      "unique_work_number": "WS/MP620/2025-2026/133167",
+      "mp_name": "Pralhad Venkatesh Joshi",
+      "state": "Karnataka",
+      "constituency": "DHARWAD",
+      "district": "DHARWAD",
+      "category": "Trust and Society",
+      "work_description": "Construction of College room of  CBS Charitable Foudation at Nulvi Vilage Pry No 817/3 Continued work",
+      "work_stage": "Pending for Sanction",
+      "amount_recommended": 500000.0,
+      "amount_sanctioned": 500000.0,
+      "amount_completed": null,
+      "total_disbursed_amount": null,
+      "is_completed": false,
+      "source_provenance": "18th_lok_sabha_mospi_api"
+    },
+    "sample_case_label": "Stalled Execution Project"
+  },
+  {
+    "work_id": "WS/MP620/2024-2025/133303",
+    "risk_score": 18.11,
+    "risk_band": "LOW",
+    "evidence_coverage": {
+      "available_weight_pct": 100.0,
+      "modules_available": [
+        "peer_benchmarking",
+        "statistical_outliers",
+        "financial_execution_mismatch",
+        "duplicate_overlap"
+      ],
+      "modules_missing": [],
+      "available_weights": {
+        "peer_benchmarking": 0.3,
+        "statistical_outliers": 0.25,
+        "financial_execution_mismatch": 0.3,
+        "duplicate_overlap": 0.15
+      },
+      "sum_available_weight": 1.0,
+      "observed_vs_proxy": "fully_observed",
+      "has_completion_evidence": true,
+      "has_expenditure_evidence": true,
+      "mismatch_confidence_tier": "HIGH",
+      "level_3_physical_progress_available": false,
+      "physical_progress_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "module_scores": {
+      "peer_benchmarking": 10.17,
+      "statistical_outliers": 3.24,
+      "financial_execution_mismatch": 0.0,
+      "duplicate_overlap": 95.0
+    },
+    "evidence_items": [
+      {
+        "module": "peer_benchmarking",
+        "metric": "recommended_amount_vs_peer_median",
+        "observed_value": "\u20b9399,104",
+        "comparison_value": "\u20b9399,304",
+        "comparison_group": "Step 1: district_category_year (n=13)",
+        "explanation": "Recommended amount \u20b9399,104 evaluated at Level 1 (district_category_year, n=13). Cohort median: \u20b9399,304, IQR: \u20b997,311 (Q1: \u20b9398,009, Q3: \u20b9495,320). Work is at 42.3th percentile (1.0x peer median).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 10.17,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "COHORT_SIZE_13",
+          "PERCENTILE_42"
+        ]
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_recommended",
+        "observed_value": 399104.0,
+        "comparison_value": "mod_z=0.31",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_recommended sub-score: 3.9 (Modified Z=0.31).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 3.89,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "amount_sanctioned",
+        "observed_value": 399104.0,
+        "comparison_value": "mod_z=0.32",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature amount_sanctioned sub-score: 4.0 (Modified Z=0.32).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 3.98,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_to_rec_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_to_rec_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "sanction_delay_days",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.92",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature sanction_delay_days sub-score: 11.6 (Modified Z=0.92).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 11.55,
+        "confidence": "HIGH",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "completed_cost_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature completed_cost_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "statistical_outliers",
+        "metric": "disbursed_to_sanction_ratio",
+        "observed_value": null,
+        "comparison_value": "mod_z=0.00",
+        "comparison_group": "18th_lok_sabha_population_baseline",
+        "explanation": "Feature disbursed_to_sanction_ratio sub-score: 0.0 (Modified Z=0.00).",
+        "source_dataset": "expenditure_completed_ongoing.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "MEDIUM",
+        "data_quality_flags": []
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "milestone_financial_alignment",
+        "observed_value": "Physical Inspection",
+        "comparison_value": "Aligned",
+        "comparison_group": "statutory_milestones",
+        "explanation": "No financial, temporal, or status mismatches detected. Work milestones align.",
+        "source_dataset": "works_recommended.json + works_completed.json",
+        "available": true,
+        "score": 0.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "NO_MISMATCH_DETECTED"
+        ]
+      },
+      {
+        "module": "financial_execution_mismatch",
+        "metric": "level_3_physical_progress",
+        "observed_value": "UNAVAILABLE",
+        "comparison_value": "0% in public dataset",
+        "comparison_group": "authoritative_physical_progress",
+        "explanation": "Authoritative physical progress percentage does not exist in source data. Not inferred or fabricated.",
+        "source_dataset": "none",
+        "available": false,
+        "score": null,
+        "confidence": "VERY HIGH",
+        "data_quality_flags": [
+          "LEVEL_3_PHYSICAL_PROGRESS_UNAVAILABLE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_133306",
+        "observed_value": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+        "comparison_value": "Construction of Community Hall at Kardigudda Village Near Mallikarjun Temple Pry No 451/2",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.908, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_259684",
+        "observed_value": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+        "comparison_value": "Construction of Community Hall at Kalghatagi TQ Dasnur Village Near  Kariyamma Temple  Pry No 184 1  ST",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.873, agency sim: 100.0%, same MP: True, similar amount: True).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_259155",
+        "observed_value": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+        "comparison_value": "Construction of Community Hall at Kalghatagi TQ Tambur Village Near gramdevi Temple Pry No 59 Countinue work",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.867, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_259235",
+        "observed_value": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+        "comparison_value": "Construction of Community Hall at Kalghatagi TQ Singhnhalli Village Near  Anjanai Temple Pry No 48 SC",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.866, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      },
+      {
+        "module": "duplicate_overlap",
+        "metric": "semantic_similarity_with_DTL_259709",
+        "observed_value": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+        "comparison_value": "Construction of Community Hall at Kalghatagi TQ Ugnikeri  Village Near  Kalmeshwar Temple Pry No 86 1",
+        "comparison_group": "Context Block: Karnataka, DHARWAD, Normal/Others",
+        "explanation": "Match classified as 'Likely duplicate' (semantic cosine: 0.862, agency sim: 100.0%, same MP: True, similar amount: False).",
+        "source_dataset": "works_recommended.json",
+        "available": true,
+        "score": 85.0,
+        "confidence": "HIGH",
+        "data_quality_flags": [
+          "CLASS_LIKELY_DUPLICATE"
+        ]
+      }
+    ],
+    "investigation_actions": [
+      "Verify physical site and cross-reference work description (matched DTL ID(s): 133306, 259684) to confirm distinct asset creation.",
+      "Verify geographic boundary markers and landmark demarcation with local panchayat / municipal authority."
+    ],
+    "work_metadata": {
+      "work_recommendation_dtl_id": 133303,
+      "unique_work_number": "WS/MP620/2024-2025/133303",
+      "mp_name": "Pralhad Venkatesh Joshi",
+      "state": "Karnataka",
+      "constituency": "DHARWAD",
+      "district": "DHARWAD",
+      "category": "Normal/Others",
+      "work_description": "Construction of Community Hall at Uppinbetageri Village Near Mallikarjun Temple Pry No1151",
+      "work_stage": "Physical Inspection",
+      "amount_recommended": 399104.0,
+      "amount_sanctioned": 399104.0,
+      "amount_completed": 399104.0,
+      "total_disbursed_amount": 399104.0,
+      "is_completed": true,
+      "source_provenance": "18th_lok_sabha_mospi_api"
+    },
+    "sample_case_label": "Normal Aligned Baseline Work"
+  }
+]

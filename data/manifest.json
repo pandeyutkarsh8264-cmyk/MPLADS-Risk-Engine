@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-09-03T19:48:45",
+  "dataset_source": "Fallback Real MPLADS Dataset (Public Scrape / GitHub: Vonter/india-mplads-works)",
+  "provenance": {
+    "repository_url": "https://github.com/Vonter/india-mplads-works",
+    "official_source_site": "http://164.100.68.116/mpladssbi/Default.aspx (Official MPLADS Portal)",
+    "license": "Open Database License (ODbL) 1.0",
+    "stated_temporal_coverage": "MPLADS reports from 1st April 2023 onwards (FY 2023-2024)",
+    "extraction_method": "Automated scrape via fetch.py and flatten.py"
+  },
+  "file_metadata": {
+    "filename": "MPLADS.csv",
+    "file_path": "data/raw/MPLADS.csv",
+    "file_size_bytes": 15796263,
+    "checksum_sha256": "aa1d0b7c9c6bbe014a1af772a22ab3dc0a6eb24d043695060abaa0f94333e413",
+    "delimiter": ";",
+    "total_rows": 60359,
+    "total_columns": 15
+  }
+}

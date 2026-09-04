@@ -1,0 +1,279 @@
+{
+  "title": "Canonical Schema Mapping: MoSPI MPLADS API -> Locked Risk Engine Schema",
+  "generated_at": "2026-09-03T23:28:03.962869",
+  "provenance": {
+    "source": "Government of India MoSPI MPLADS eSAKSHI API",
+    "endpoint": "POST https://mplads.mospi.gov.in/rest/PreLoginDashboardData/getTilesReportData",
+    "combo": "0,0,0,2,7 (18th Lok Sabha)",
+    "NOT_dataful": "These are NOT Dataful datasets 22567/22566/22565/18533"
+  },
+  "datasets": {
+    "works_recommended": {
+      "source_fields": [
+        "WORK_CATEGORY",
+        "ACTIVITY_NAME",
+        "STATE_NAME",
+        "HOUSE_OF_PARLIAMENT",
+        "IDA_NAME",
+        "TENURE",
+        "MP_NAME",
+        "WORK_DESCRIPTION",
+        "RECOMMENDATION_DATE",
+        "RECOMMENDED_AMOUNT",
+        "FLAG",
+        "CONSTITUENCY_ID",
+        "WORK_STAGE",
+        "LETTER_NO",
+        "SANCTION_AMOUNT",
+        "Sno",
+        "CONSTITUENCY",
+        "WORK_RECOMMENDATION_DTL_ID",
+        "FILE_STATUS",
+        "TENURE_START_DATE",
+        "TENURE_END_DATE",
+        "ATTACH_ID",
+        "SANCTION_DATE"
+      ],
+      "canonical_mapping": {
+        "work_recommendation_dtl_id": "WORK_RECOMMENDATION_DTL_ID (source-native numeric PK)",
+        "unique_work_number": "Deterministically extracted from ACTIVITY_NAME prefix (WS/MP.../YYYY/NNNNN)",
+        "mp_name": "MP_NAME",
+        "house": "HOUSE_OF_PARLIAMENT (mapped: '2'->Lok Sabha, '1'->Rajya Sabha)",
+        "state": "STATE_NAME",
+        "constituency": "CONSTITUENCY",
+        "constituency_id": "CONSTITUENCY_ID",
+        "district": "Parsed from IDA_NAME (portion before parentheses)",
+        "implementing_authority": "Parsed from IDA_NAME (portion inside parentheses, minus _IDA suffix)",
+        "category": "WORK_CATEGORY",
+        "work_description": "WORK_DESCRIPTION (fallback: extracted from ACTIVITY_NAME after ID prefix)",
+        "work_stage": "WORK_STAGE",
+        "amount_recommended": "RECOMMENDED_AMOUNT (float, INR)",
+        "amount_sanctioned": "SANCTION_AMOUNT (float, INR; null for unsanctioned)",
+        "recommendation_date": "RECOMMENDATION_DATE (dd-Mon-YYYY -> YYYY-MM-DD)",
+        "sanction_date": "SANCTION_DATE (dd-Mon-YYYY -> YYYY-MM-DD; 'NA' -> null)",
+        "tenure": "TENURE"
+      },
+      "unmapped_source_fields": [
+        "FLAG",
+        "FILE_STATUS",
+        "ATTACH_ID",
+        "Sno",
+        "LETTER_NO"
+      ],
+      "fields_not_in_source": [
+        "amount_completed",
+        "completion_date",
+        "vendor_name",
+        "vendor_id",
+        "fund_disbursed_amount",
+        "expenditure_date"
+      ]
+    },
+    "works_completed": {
+      "source_fields": [
+        "WORK_CATEGORY",
+        "ACTIVITY_NAME",
+        "STATE_NAME",
+        "IDA_NAME",
+        "WORK_DESCRIPTION",
+        "MP_NAME",
+        "FLAG",
+        "CONSTITUENCY_ID",
+        "LETTER_NO",
+        "ACTUAL_AMOUNT",
+        "Sno",
+        "CONSTITUENCY",
+        "ACTUAL_END_DATE",
+        "WORK_RECOMMENDATION_DTL_ID",
+        "WORK_ID",
+        "AVERAGE_RATING"
+      ],
+      "canonical_mapping": {
+        "work_recommendation_dtl_id": "WORK_RECOMMENDATION_DTL_ID (exact FK to recommended)",
+        "work_id": "WORK_ID (numeric internal ID, NOT same format as Expenditure WORK_ID)",
+        "unique_work_number": "Deterministically extracted from ACTIVITY_NAME (100% success rate)",
+        "mp_name": "MP_NAME",
+        "state": "STATE_NAME",
+        "constituency": "CONSTITUENCY",
+        "district": "Parsed from IDA_NAME",
+        "category": "WORK_CATEGORY",
+        "work_description": "WORK_DESCRIPTION",
+        "amount_completed": "ACTUAL_AMOUNT (float, INR)",
+        "completion_date": "ACTUAL_END_DATE (dd-Mon-YYYY -> YYYY-MM-DD)",
+        "average_rating": "AVERAGE_RATING"
+      },
+      "unmapped_source_fields": [
+        "FLAG",
+        "Sno",
+        "LETTER_NO"
+      ],
+      "fields_not_in_source": [
+        "house",
+        "amount_recommended",
+        "recommendation_date",
+        "sanction_date",
+        "tenure"
+      ]
+    },
+    "expenditure": {
+      "source_fields": [
+        "STATE_NAME",
+        "ACTIVITY_NAME",
+        "VENDOR_NAME",
+        "HOUSE_OF_PARLIAMENT",
+        "IDA_NAME",
+        "IA_NAME",
+        "TENURE",
+        "MP_NAME",
+        "LETTER_NO",
+        "VENDOR_ID",
+        "EXPENDITURE_DATE",
+        "FUND_DISBURSED_AMT",
+        "Sno",
+        "CONSTITUENCY",
+        "WORK_STATUS",
+        "WORK_RECOMMENDATION_DTL_ID",
+        "TENURE_START_DATE",
+        "TENURE_END_DATE",
+        "WORK_ID"
+      ],
+      "canonical_mapping": {
+        "work_recommendation_dtl_id": "WORK_RECOMMENDATION_DTL_ID (exact FK to recommended)",
+        "work_id": "WORK_ID (WS/MP... string format, NOT same as Completed numeric WORK_ID)",
+        "mp_name": "MP_NAME",
+        "house": "HOUSE_OF_PARLIAMENT",
+        "state": "STATE_NAME",
+        "constituency": "CONSTITUENCY",
+        "district": "Parsed from IDA_NAME",
+        "vendor_name": "VENDOR_NAME",
+        "vendor_id": "VENDOR_ID",
+        "implementing_agency": "IA_NAME",
+        "fund_disbursed_amount": "FUND_DISBURSED_AMT (float, INR)",
+        "expenditure_date": "EXPENDITURE_DATE (dd-Mon-YYYY -> YYYY-MM-DD)",
+        "work_status": "WORK_STATUS"
+      },
+      "unmapped_source_fields": [
+        "Sno",
+        "LETTER_NO",
+        "ACTIVITY_NAME"
+      ],
+      "fields_not_in_source": [
+        "amount_recommended",
+        "amount_sanctioned",
+        "recommendation_date",
+        "sanction_date",
+        "category",
+        "work_description"
+      ],
+      "schema_note": "ACTIVITY_NAME in Expenditure contains ONLY the activity description (no WS/... prefix). unique_work_number extraction is 0%."
+    },
+    "allocated_limit": {
+      "source_fields": [
+        "STATE_NAME",
+        "HOUSE_OF_PARLIAMENT",
+        "TENURE",
+        "Sno",
+        "MP_NAME",
+        "HOUSE_NAME",
+        "CONSTITUENCY",
+        "ALLOCATED_AMT",
+        "TENURE_START_DATE",
+        "TENURE_END_DATE"
+      ],
+      "canonical_mapping": {
+        "mp_name": "MP_NAME",
+        "house": "HOUSE_OF_PARLIAMENT / HOUSE_NAME",
+        "state": "STATE_NAME",
+        "constituency": "CONSTITUENCY",
+        "allocated_amount": "ALLOCATED_AMT (float, INR)",
+        "tenure": "TENURE"
+      },
+      "fields_not_in_source": [
+        "work_recommendation_dtl_id",
+        "work_id",
+        "category",
+        "work_description"
+      ],
+      "note": "MP-level allocation table, not work-level. Joins to work tables via MP_NAME + CONSTITUENCY."
+    }
+  },
+  "canonical_samples": {
+    "recommended_sample": {
+      "work_recommendation_dtl_id": 133166,
+      "unique_work_number": "WS/MP620/2024-2025/133166",
+      "activity_name_raw": "WS/\t MP620/2024-2025/133166-Construction of buildings for community cultural activities",
+      "mp_name": "Pralhad Venkatesh Joshi",
+      "house": "Lok Sabha",
+      "state": "Karnataka",
+      "constituency": "DHARWAD",
+      "constituency_id": 187,
+      "district": "DHARWAD",
+      "implementing_authority": "DEPUTY COMMISSIONER DHARWAR",
+      "ida_name_raw": "DHARWAD(DEPUTY COMMISSIONER DHARWAR_IDA)",
+      "category": "Normal/Others",
+      "work_description": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math Continue Work",
+      "work_stage": "Physical Inspection",
+      "letter_no": "LN/\t MP620/2024-2025/162",
+      "amount_recommended": 497185.0,
+      "amount_sanctioned": 497185.0,
+      "recommendation_date": "2024-07-08",
+      "sanction_date": "2024-07-09",
+      "tenure_start_date": "2024-06-04",
+      "tenure_end_date": "2029-06-03",
+      "tenure": "18th Lok Sabha",
+      "flag": 1,
+      "file_status": true,
+      "attach_id": 782562,
+      "_source": "mospi_api_works_recommended"
+    },
+    "completed_sample": {
+      "work_recommendation_dtl_id": 133409,
+      "work_id": 52372,
+      "unique_work_number": "WS/MP418/2024-2025/133409",
+      "activity_name_raw": "WS/MP418/2024-2025/133409-Construction of roads, link roads, pathways or any other road with or without drainage system",
+      "mp_name": "Pradeep Kumar Singh",
+      "state": "Bihar",
+      "constituency": "ARARIA",
+      "constituency_id": 44,
+      "district": "ARARIA",
+      "implementing_authority": "DISTRICT PLANNING OFFICER ARARIA",
+      "ida_name_raw": "ARARIA(DISTRICT PLANNING OFFICER ARARIA_IDA)",
+      "category": "Normal/Others",
+      "work_description": "PCC Road from Permeshwar Bhagat house to Ramdev Master house at ward no 15, uder Forbesganj Block.",
+      "letter_no": "LN/MP418/2024-2025/26",
+      "amount_completed": 448127.0,
+      "completion_date": "2024-09-05",
+      "average_rating": 0.0,
+      "_source": "mospi_api_works_completed"
+    },
+    "expenditure_sample": {
+      "work_recommendation_dtl_id": 233777,
+      "work_id": "WS/MP18218/2025-2026/233777",
+      "mp_name": "ATUL GARG",
+      "house": "Lok Sabha",
+      "state": "Uttar Pradesh",
+      "constituency": "GHAZIABAD",
+      "district": "GHAZIABAD",
+      "implementing_authority": "DISTRICT MAGISTRAE GHAZIABAD",
+      "vendor_name": "DARSH BUILDCON",
+      "vendor_id": 3562,
+      "implementing_agency": "RED_Gzb",
+      "fund_disbursed_amount": 799146.0,
+      "expenditure_date": "2026-08-21",
+      "work_status": "Payment In-Progress",
+      "letter_no": "LN/MP18218/2025-2026/13",
+      "_source": "mospi_api_expenditure"
+    },
+    "allocation_sample": {
+      "mp_name": "AASHTIKAR PATIL NAGESH BAPURAO",
+      "house": "Lok Sabha",
+      "state": "Maharashtra",
+      "constituency": "HINGOLI",
+      "allocated_amount": 190289442.0,
+      "tenure": "18th Lok Sabha",
+      "tenure_start_date": "2024-06-04",
+      "tenure_end_date": "2029-06-03",
+      "_source": "mospi_api_allocated_limit"
+    }
+  }
+}

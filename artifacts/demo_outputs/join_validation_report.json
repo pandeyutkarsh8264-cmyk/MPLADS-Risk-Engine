@@ -1,0 +1,163 @@
+{
+  "datasets": {
+    "works_recommended": {
+      "record_count": 106261,
+      "field_count": 23
+    },
+    "works_completed": {
+      "record_count": 34259,
+      "field_count": 16
+    },
+    "expenditure": {
+      "record_count": 83907,
+      "field_count": 19
+    },
+    "allocated_limit": {
+      "record_count": 544,
+      "field_count": 10
+    }
+  },
+  "join_validation": {
+    "recommended_completed_DTL_ID": {
+      "recommended_distinct": 106260,
+      "completed_distinct": 34258,
+      "intersection_count": 34128,
+      "recommended_only_unmatched": 72132,
+      "completed_only_unmatched": 130,
+      "coverage_completed_in_recommended_pct": 99.62,
+      "coverage_recommended_in_completed_pct": 32.12,
+      "recommended_duplicate_ids": 0,
+      "completed_duplicate_ids": 0,
+      "cardinality": "STRICT_ONE_TO_ONE"
+    },
+    "recommended_expenditure_DTL_ID": {
+      "recommended_distinct": 106260,
+      "expenditure_distinct": 56459,
+      "intersection_count": 56217,
+      "recommended_only_unmatched": 50043,
+      "expenditure_only_unmatched": 242,
+      "coverage_expenditure_in_recommended_pct": 99.57,
+      "coverage_recommended_in_expenditure_pct": 52.91,
+      "recommended_duplicate_ids": 0,
+      "expenditure_duplicate_ids": 14584,
+      "cardinality": "ONE_recommended_TO_MANY_expenditure"
+    },
+    "completed_expenditure_DTL_ID": {
+      "completed_distinct": 34258,
+      "expenditure_distinct": 56459,
+      "intersection_count": 34173,
+      "completed_only_unmatched": 85,
+      "expenditure_only_unmatched": 22286,
+      "coverage_expenditure_in_completed_pct": 60.53,
+      "coverage_completed_in_expenditure_pct": 99.75,
+      "completed_duplicate_ids": 0,
+      "expenditure_duplicate_ids": 14584,
+      "cardinality": "ONE_completed_TO_MANY_expenditure"
+    }
+  },
+  "key_analysis": {
+    "WORK_RECOMMENDATION_DTL_ID": {
+      "recommended": {
+        "total_rows": 106261,
+        "non_null": 106260,
+        "null_count": 1,
+        "distinct": 106260,
+        "duplicate_id_count": 0,
+        "total_duplicate_rows": 0
+      },
+      "completed": {
+        "total_rows": 34259,
+        "non_null": 34258,
+        "null_count": 1,
+        "distinct": 34258,
+        "duplicate_id_count": 0,
+        "total_duplicate_rows": 0
+      },
+      "expenditure": {
+        "total_rows": 83907,
+        "non_null": 83906,
+        "null_count": 1,
+        "distinct": 56459,
+        "duplicate_id_count": 14584,
+        "total_duplicate_rows": 42031
+      }
+    },
+    "WORK_ID": {
+      "recommended": {
+        "field_present": false,
+        "note": "WORK_ID is NOT present in works_recommended.json"
+      },
+      "completed": {
+        "total_rows": 34259,
+        "non_null": 34258,
+        "distinct": 34258,
+        "duplicate_id_count": 0,
+        "field_present": true
+      },
+      "expenditure": {
+        "total_rows": 83907,
+        "non_null": 83906,
+        "distinct": 56459,
+        "duplicate_id_count": 14584,
+        "field_present": true
+      }
+    },
+    "unique_work_number_extraction": {
+      "recommended": {
+        "total_rows": 106261,
+        "extracted_count": 78705,
+        "extraction_rate_pct": 74.07,
+        "failed_count": 27556,
+        "distinct_extracted": 78705,
+        "duplicate_extracted": 0
+      },
+      "completed": {
+        "total_rows": 34259,
+        "extracted_count": 34258,
+        "extraction_rate_pct": 100.0,
+        "failed_count": 1,
+        "distinct_extracted": 34258,
+        "duplicate_extracted": 0
+      },
+      "expenditure": {
+        "total_rows": 83907,
+        "extracted_count": 0,
+        "extraction_rate_pct": 0.0,
+        "failed_count": 83907,
+        "distinct_extracted": 0,
+        "duplicate_extracted": 0
+      },
+      "note": "Expenditure ACTIVITY_NAME contains only the activity description (no WS/... prefix). Extraction rate is 0% for Expenditure. For Recommended, 25.93% of rows have ACTIVITY_NAME='NA-...' (unsanctioned works without assigned work numbers). WORK_RECOMMENDATION_DTL_ID remains the authoritative exact join key."
+    },
+    "dtl_id_vs_work_number_consistency": {
+      "dtl_ids_with_multiple_work_numbers": 0,
+      "work_numbers_with_multiple_dtl_ids": 0,
+      "trailing_number_inconsistencies": 0,
+      "relationship": "PERFECT_BIJECTION",
+      "note": "The trailing numeric segment of the WS/MP.../YYYY/NNNNN work number is always exactly equal to WORK_RECOMMENDATION_DTL_ID. This confirms DTL_ID is the canonical numeric primary key embedded within the human-readable work number string."
+    }
+  },
+  "schema_notes": [
+    {
+      "field": "WORK_ID",
+      "issue": "SCHEMA_INCONSISTENCY",
+      "detail": "Completed.WORK_ID is a numeric internal ID (e.g. '52372'). Expenditure.WORK_ID is a WS/MP... string (e.g. 'WS/MP18218/2025-2026/233777'). These are structurally different identifiers and MUST NOT be directly equated. WORK_RECOMMENDATION_DTL_ID is the only consistent exact foreign key across all three datasets."
+    }
+  ],
+  "authoritative_join_key": {
+    "recommended_key": "WORK_RECOMMENDATION_DTL_ID",
+    "rationale": [
+      "Present in all three work-level datasets (Recommended, Completed, Expenditure)",
+      "100% non-null in all datasets (except 1 sentinel/null row per dataset)",
+      "Strictly unique in Recommended (106,260 distinct / 106,260 non-null)",
+      "Strictly unique in Completed (34,258 distinct / 34,258 non-null)",
+      "Expected one-to-many in Expenditure (multiple vendor disbursements per work)",
+      "99.62% of Completed DTL_IDs match a Recommended DTL_ID (130 orphans)",
+      "99.57% of distinct Expenditure DTL_IDs match a Recommended DTL_ID (242 orphans)",
+      "Perfect bijection with the trailing number in the extracted WS/MP.../NNNNN work number",
+      "WORK_ID field has INCONSISTENT formats across datasets (numeric in Completed, WS/... string in Expenditure)",
+      "unique_work_number extraction from ACTIVITY_NAME achieves only 74% in Recommended (fails for unsanctioned NA- prefixed rows)"
+    ],
+    "canonical_unique_work_number_derivation": "A canonical unique_work_number CAN be deterministically derived from ACTIVITY_NAME for rows where extraction succeeds (74% of Recommended, 100% of Completed). For rows where it fails (NA- prefixed unsanctioned works), the DTL_ID alone serves as the primary key. The derived work number and DTL_ID are provably consistent (zero inconsistencies in the trailing number check)."
+  }
+}

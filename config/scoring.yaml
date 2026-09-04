@@ -1,0 +1,63 @@
+# Locked scoring configuration
+# Weights are locked across the 4 engines per specification
+weights:
+  peer_benchmarking: 0.30
+  statistical_outliers: 0.25
+  financial_execution_mismatch: 0.30
+  duplicate_overlap: 0.15
+
+# Global score bounds
+score_range:
+  min: 0.0
+  max: 100.0
+
+# Peer Benchmarking configuration (Locked 5-step cohort hierarchy)
+peer_benchmarking:
+  min_cohort_size: 10
+  iqr_fence: 1.5
+  extreme_fence: 3.0
+  hierarchy:
+    - ["district", "category", "year"]
+    - ["district", "category"]
+    - ["state", "category", "year"]
+    - ["state", "category"]
+    - ["national", "category"]
+
+# Statistical Outliers configuration (Robust MAD/IQR & Zero-dispersion safety)
+statistical_outliers:
+  z_mod_threshold: 3.5
+  extreme_z_threshold: 6.0
+  zero_dispersion_threshold: 1e-6
+
+# Financial-Execution Mismatch configuration
+# Note: These are first-pass tunable prototype heuristics, NOT locked constants.
+mismatch:
+  confidence_labels:
+    level_1_proxy: "LOW"
+    level_1_observed_financial: "MEDIUM"
+    level_2_time_based: "HIGH"
+    level_3_physical: "VERY HIGH"
+  heuristics:
+    cost_overrun_threshold: 0.10          # 10% cost overrun over sanction
+    extreme_overrun_threshold: 0.50        # 50% severe cost overrun
+    sanction_rec_gap_threshold: 0.25       # 25% discrepancy between sanction and recommended
+    disbursement_overrun_threshold: 0.20   # 20% disbursements exceeding sanction
+    prolonged_pending_days: 180            # 180 days pending sanction
+    large_unprocessed_amount: 5000000.0    # 50 Lakh unprocessed
+    fast_completion_days: 3                # 3 days sanction to completion (impossibly fast)
+    stalled_execution_days: 365            # 365 days stalled without disbursement
+
+# Duplicate / Overlap configuration
+# Note: Semantic and text thresholds are first-pass calibrated heuristics, NOT validated probabilities.
+duplicate_overlap:
+  model_name: "all-MiniLM-L6-v2"
+  blocking_keys:
+    - ["state", "constituency", "category"]
+    - ["state", "district", "category"]
+  heuristics:
+    semantic_threshold_likely: 0.82        # Cosine similarity for likely duplicate with contextual agreement
+    semantic_threshold_possible: 0.68      # Cosine similarity for possible overlap
+    semantic_verbatim_threshold: 0.95      # Verbatim description threshold
+    entity_fuzzy_threshold: 80.0           # RapidFuzz threshold for agency/entity matching
+    amount_tolerance: 0.15                 # 15% amount tolerance between candidate works
+    max_block_size: 500                    # Maximum candidate works evaluated per block

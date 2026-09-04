@@ -1,0 +1,42 @@
+{
+  "title": "Source Mapping Report: MoSPI MPLADS API Datasets",
+  "generated_at": "2026-09-03T23:28:03.962869",
+  "source_provenance": {
+    "api_endpoint": "POST https://mplads.mospi.gov.in/rest/PreLoginDashboardData/getTilesReportData",
+    "combo_parameter": "0,0,0,2,7",
+    "tenure": "18th Lok Sabha",
+    "authentication_required": false,
+    "source_type": "Government of India MoSPI MPLADS eSAKSHI pre-login public REST API",
+    "NOT_dataful": true
+  },
+  "dataset_inventory": {
+    "works_recommended": {
+      "api_key": "Works Recommended",
+      "records": 106261,
+      "fields": 23,
+      "role": "PRIMARY work-level base (all recommended works for 18th Lok Sabha)",
+      "raw_file": "data/raw/api_18th/works_recommended.json"
+    },
+    "works_completed": {
+      "api_key": "Works Completed",
+      "records": 34259,
+      "fields": 16,
+      "role": "ENRICHMENT: completion evidence with ACTUAL_AMOUNT and ACTUAL_END_DATE",
+      "raw_file": "data/raw/api_18th/works_completed.json"
+    },
+    "expenditure": {
+      "api_key": "Expenditure on Completed and On-going Works as on Date",
+      "records": 83907,
+      "fields": 19,
+      "role": "VENDOR-LEVEL expenditure with VENDOR_NAME, FUND_DISBURSED_AMT, EXPENDITURE_DATE",
+      "raw_file": "data/raw/api_18th/expenditure_completed_ongoing.json"
+    },
+    "allocated_limit": {
+      "api_key": "Allocated Limit for Hon'ble MPs",
+      "records": 544,
+      "fields": 10,
+      "role": "MP-LEVEL allocation limits for cross-referencing total allowed vs spent",
+      "raw_file": "data/raw/api_18th/allocated_limit_mps.json"
+    }
+  }
+}

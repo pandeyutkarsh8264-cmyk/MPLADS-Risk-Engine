@@ -1,0 +1,227 @@
+{
+  "title": "Four Locked Risk Engines Profiling Report (Step 4)",
+  "data_summary": {
+    "recommended_records": 106261,
+    "completed_records": 34259,
+    "expenditure_records": 83907,
+    "canonical_joined_master": 106261,
+    "completed_match_rate_pct": 99.62,
+    "expenditure_match_rate_pct": 99.57,
+    "orphan_completed_excluded": 130
+  },
+  "runtime_and_memory": {
+    "data_load_seconds": 6.11,
+    "canonical_join_seconds": 83.3,
+    "peak_ram_mb": 583.48,
+    "engine_1_peer_benchmarking": {
+      "fit_time_seconds": 2.02,
+      "eval_sample_size": 5000,
+      "eval_time_seconds": 1.39,
+      "throughput_works_per_sec": 3600.6,
+      "cohort_level_distribution": {
+        "Step_1_district_category_year": 4769,
+        "Step_3_state_category_year": 35,
+        "Step_2_district_category": 178,
+        "Step_4_state_category": 14,
+        "Step_5_national_category": 4
+      }
+    },
+    "engine_2_statistical_outliers": {
+      "fit_time_seconds": 20.9,
+      "eval_sample_size": 5000,
+      "eval_time_seconds": 2.57,
+      "throughput_works_per_sec": 1947.8,
+      "coverage_distribution": {
+        "full": 4317,
+        "partial_high": 683
+      }
+    },
+    "engine_3_financial_execution_mismatch": {
+      "eval_sample_size": 5000,
+      "eval_time_seconds": 2.31,
+      "throughput_works_per_sec": 2165.2,
+      "confidence_distribution": {
+        "HIGH": 4925,
+        "LOW": 75
+      },
+      "top_signals": {
+        "MISMATCH_L2_STALLED_EXECUTION_NO_DISBURSEMENT": 521,
+        "MISMATCH_L2_IMPOSSIBLY_FAST_COMPLETION": 124,
+        "MISMATCH_L1_PROLONGED_PENDING_SANCTION": 75,
+        "MISMATCH_L1_HIGH_DISBURSEMENT_EARLY_STAGE": 51
+      }
+    },
+    "engine_4_duplicate_overlap": {
+      "index_time_seconds": 0.38,
+      "total_blocks": 944,
+      "eval_sample_size": 1000,
+      "eval_time_seconds": 72.16,
+      "throughput_works_per_sec": 13.9,
+      "likely_duplicates_found": 14666,
+      "possible_overlaps_found": 34329
+    }
+  },
+  "sample_work_evaluation": {
+    "work_id": "WS/MP620/2024-2025/133166",
+    "work_description": "Construction of Community Bhavan at Navalgund TQ Belavatagi Village Pry No 1/A Near Shivanand Math Continue Work",
+    "mp_name": "Pralhad Venkatesh Joshi",
+    "state": "Karnataka",
+    "constituency": "DHARWAD",
+    "category": "Normal/Others",
+    "amount_recommended": 497185.0,
+    "amount_sanctioned": 497185.0,
+    "amount_completed": 497185.0,
+    "engine_1_peer_benchmarking": {
+      "score": 25.38,
+      "cohort_level": 1,
+      "cohort_level_name": "district_category_year",
+      "cohort_size": 13,
+      "peer_median": 399304.0,
+      "peer_q1": 398009.0,
+      "peer_q3": 495320.0,
+      "peer_iqr": 97311.0,
+      "percentile_rank": 88.46,
+      "deviation_ratio": 1.25,
+      "reason_codes": [
+        "COHORT_STEP_1_DISTRICT_CATEGORY_YEAR",
+        "PEER_ELEVATED_AMOUNT"
+      ],
+      "evidence": "Recommended amount \u20b9497,185 evaluated at Level 1 (district_category_year, n=13). Cohort median: \u20b9399,304, IQR: \u20b997,311 (Q1: \u20b9398,009, Q3: \u20b9495,320). Work is at 88.5th percentile (1.2x peer median).",
+      "coverage": "full"
+    },
+    "engine_2_statistical_outliers": {
+      "score": 5.15,
+      "feature_scores": {
+        "amount_recommended": 8.3,
+        "amount_sanctioned": 8.31,
+        "sanction_to_rec_ratio": 0.0,
+        "sanction_delay_days": 14.3,
+        "completed_cost_ratio": 0.0,
+        "disbursed_to_sanction_ratio": 0.0
+      },
+      "feature_zscores": {
+        "amount_recommended": 0.66,
+        "amount_sanctioned": 0.66,
+        "sanction_to_rec_ratio": 0.0,
+        "sanction_delay_days": 1.14,
+        "completed_cost_ratio": 0.0,
+        "disbursed_to_sanction_ratio": 0.0
+      },
+      "features_available": 6,
+      "features_total": 6,
+      "used_features": [
+        "amount_recommended",
+        "amount_sanctioned",
+        "sanction_to_rec_ratio",
+        "sanction_delay_days",
+        "completed_cost_ratio",
+        "disbursed_to_sanction_ratio"
+      ],
+      "omitted_features": [],
+      "reason_codes": [],
+      "evidence": "Evaluated on 6/6 available features (composite score: 5.2). amount_recommended: val=497,185.00 vs median=312,600.00 (mod_z=0.66, score=8.3); amount_sanctioned: val=497,185.00 vs median=309,000.00 (mod_z=0.66, score=8.3); sanction_to_rec_ratio: constant baseline (val=1.00, median=1.00, zero dispersion), treated as neutral; sanction_delay_days: val=1.00 vs median=79.00 (mod_z=1.14, score=14.3); completed_cost_ratio: constant baseline (val=1.00, median=1.00, zero dispersion), treated as neutral; disbursed_to_sanction_ratio: val=1.00 vs median=1.00 (mod_z=0.00, score=0.0)",
+      "coverage": "full"
+    },
+    "engine_3_financial_mismatch": {
+      "score": 0.0,
+      "confidence_level": 2,
+      "confidence_label": "HIGH",
+      "signals": [],
+      "reason_codes": [
+        "MISMATCH_L3_PHYSICAL_PROGRESS_UNAVAILABLE"
+      ],
+      "evidence": "No financial, temporal, or status mismatches detected. Work milestones align.",
+      "coverage": "no_mismatch_detected",
+      "level_3_status": "UNAVAILABLE_IN_SOURCE"
+    },
+    "engine_4_duplicate_overlap": {
+      "score": 94.0,
+      "top_matches": [
+        {
+          "matched_work_dtl_id": 254661,
+          "matched_unique_work_number": "WS/MP620/2026-2027/254661",
+          "matched_work_description": "Construction of Samudya Bhavan at Pry No 1 A near Shivanand Math of Navalgund TQ Belavatagi village ",
+          "matched_amount": 400000.0,
+          "matched_mp_name": "Pralhad Venkatesh Joshi",
+          "matched_agency": "DEPUTY COMMISSIONER DHARWAR",
+          "semantic_cosine_similarity": 0.881,
+          "agency_similarity": 100.0,
+          "same_mp": true,
+          "similar_amount": false,
+          "amount_difference_ratio": 0.195,
+          "classification": "Likely duplicate",
+          "match_weight": 85.0
+        },
+        {
+          "matched_work_dtl_id": 298980,
+          "matched_unique_work_number": null,
+          "matched_work_description": "Construction of Community Bhavan at NavalgundTQ Belavatagi Village Pry No 2 near Ulavi Channabasaveshwar Temple Continue",
+          "matched_amount": 500000.0,
+          "matched_mp_name": "Pralhad Venkatesh Joshi",
+          "matched_agency": "DEPUTY COMMISSIONER DHARWAR",
+          "semantic_cosine_similarity": 0.843,
+          "agency_similarity": 100.0,
+          "same_mp": true,
+          "similar_amount": true,
+          "amount_difference_ratio": 0.006,
+          "classification": "Likely duplicate",
+          "match_weight": 85.0
+        },
+        {
+          "matched_work_dtl_id": 292696,
+          "matched_unique_work_number": "WS/MP620/2026-2027/292696",
+          "matched_work_description": "Construction of Cultural Bhavan Continue work at Navalgund TQ Datanal Village Pry No 69 near Shivlingeshwar Temple",
+          "matched_amount": 500000.0,
+          "matched_mp_name": "Pralhad Venkatesh Joshi",
+          "matched_agency": "DEPUTY COMMISSIONER DHARWAR",
+          "semantic_cosine_similarity": 0.836,
+          "agency_similarity": 100.0,
+          "same_mp": true,
+          "similar_amount": true,
+          "amount_difference_ratio": 0.006,
+          "classification": "Likely duplicate",
+          "match_weight": 85.0
+        },
+        {
+          "matched_work_dtl_id": 310278,
+          "matched_unique_work_number": null,
+          "matched_work_description": "Construction of Community Bhavan at NavalgundTQ Morab Village Pry No 1123 ",
+          "matched_amount": 500000.0,
+          "matched_mp_name": "Pralhad Venkatesh Joshi",
+          "matched_agency": "DEPUTY COMMISSIONER DHARWAR",
+          "semantic_cosine_similarity": 0.821,
+          "agency_similarity": 100.0,
+          "same_mp": true,
+          "similar_amount": true,
+          "amount_difference_ratio": 0.006,
+          "classification": "Likely duplicate",
+          "match_weight": 85.0
+        },
+        {
+          "matched_work_dtl_id": 277359,
+          "matched_unique_work_number": "WS/MP620/2026-2027/277359",
+          "matched_work_description": "Construction of Community Bhavan at Dharwad TQ Garag Village Pry No.1 near Bakkayyan Math",
+          "matched_amount": 500000.0,
+          "matched_mp_name": "Pralhad Venkatesh Joshi",
+          "matched_agency": "DEPUTY COMMISSIONER DHARWAR",
+          "semantic_cosine_similarity": 0.817,
+          "agency_similarity": 100.0,
+          "same_mp": true,
+          "similar_amount": true,
+          "amount_difference_ratio": 0.006,
+          "classification": "Possible overlap",
+          "match_weight": 60.0
+        }
+      ],
+      "match_count_likely": 4,
+      "match_count_possible": 113,
+      "candidates_evaluated": 200,
+      "reason_codes": [
+        "DUPLICATE_LIKELY_MATCH_FOUND",
+        "DUPLICATE_MULTIPLE_LIKELY_MATCHES"
+      ],
+      "evidence": "Found 4 likely duplicate(s) and 113 possible overlap(s) within block (n=200). Top match: DTL_ID 254661 (Likely duplicate, semantic cosine: 0.881, agency sim: 100.0%, same MP: True, amount match: False). Description: 'Construction of Samudya Bhavan at Pry No 1 A near Shivanand Math of Navalgund TQ Belavatagi village '",
+      "coverage": "blocked_minilm_semantic"
+    }
+  }
+}
