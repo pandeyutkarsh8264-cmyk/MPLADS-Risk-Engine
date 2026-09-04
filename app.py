@@ -317,7 +317,9 @@ with tab_exec:
             r_score = row.get("risk_score")
             r_band = row.get("risk_band")
             raw_wid = row.get("work_id")
-            w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{int(row.get('work_recommendation_dtl_id'))}"
+            raw_dtl = row.get("work_recommendation_dtl_id")
+            dtl_disp = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else "UNKNOWN"
+            w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
             desc = row.get("work_description") or ""
             mp = row.get("mp_name") or ""
             loc = f"{row.get('constituency')}, {row.get('state')}"
@@ -392,11 +394,14 @@ with tab_queue:
     table_rows = []
     for rank, (_, r) in enumerate(df_display.iterrows(), start=1):
         raw_wid = r.get("work_id")
-        wid = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{int(r.get('work_recommendation_dtl_id'))}"
+        raw_dtl = r.get("work_recommendation_dtl_id")
+        dtl_num = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else None
+        dtl_disp = str(dtl_num) if dtl_num is not None else "—"
+        wid = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
         table_rows.append({
             "Rank": rank,
             "Work ID": wid,
-            "DTL ID": int(r.get("work_recommendation_dtl_id")),
+            "DTL ID": dtl_disp,
             "State": str(r.get("state") or ""),
             "Constituency": str(r.get("constituency") or ""),
             "Category": str(r.get("category") or ""),
@@ -408,21 +413,26 @@ with tab_queue:
             "Stat (25%)": f"{r.get('stat_score'):.1f}" if pd.notna(r.get("stat_score")) else "—",
             "Mismatch (30%)": f"{r.get('mismatch_score'):.1f}" if pd.notna(r.get("mismatch_score")) else "—",
             "Duplicate (15%)": f"{r.get('duplicate_score'):.1f}" if pd.notna(r.get("duplicate_score")) else "—",
+            "_dtl_id_num": dtl_num,
         })
 
     df_view = pd.DataFrame(table_rows)
-    st.dataframe(df_view, use_container_width=True, hide_index=True, height=450)
+    cols_to_show = [c for c in df_view.columns if not c.startswith("_")]
+    st.dataframe(df_view[cols_to_show], use_container_width=True, hide_index=True, height=450)
 
     # Quick selector to send work directly to Investigation View
     st.markdown("#### 🔎 Select a Project for Investigation Deep Dive")
-    if not df_display.empty:
+    if not df_display.empty and table_rows:
         opts = [f"#{r['Rank']} - {r['Work ID']} (Score: {r['Risk Score']}, Band: {r['Risk Band']}) | {r['State']}" for r in table_rows]
-        sel_item = st.selectbox("Choose work from queue", opts, index=0)
-        sel_dtl_id = int(sel_item.split("- ")[1].split(" ")[0].replace("DTL_", "")) if "DTL_" in sel_item else int(table_rows[opts.index(sel_item)]["DTL ID"])
+        sel_idx = st.selectbox("Choose work from queue", range(len(opts)), format_func=lambda i: opts[i], index=0)
+        sel_dtl_id = table_rows[sel_idx].get("_dtl_id_num")
         
         if st.button("🚀 Open in Work Investigation View"):
-            st.session_state["selected_dtl_id"] = sel_dtl_id
-            st.success(f"Selected Work DTL ID: {sel_dtl_id}. Switch to 'Work Investigation View' tab.")
+            if sel_dtl_id is not None:
+                st.session_state["selected_dtl_id"] = int(sel_dtl_id)
+                st.success(f"Selected Work DTL ID: {int(sel_dtl_id)}. Switch to 'Work Investigation View' tab.")
+            else:
+                st.warning("Selected record does not have a valid DTL ID.")
 
 
 # =============================================================================
@@ -493,7 +503,9 @@ with tab_investigate:
         # Work Identification Header
         meta = work_risk.work_metadata
         raw_wid = work_risk.work_id
-        w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{int(meta.get('work_recommendation_dtl_id'))}"
+        raw_dtl = meta.get('work_recommendation_dtl_id')
+        dtl_disp = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else "UNKNOWN"
+        w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
         r_score = work_risk.risk_score
         r_band = work_risk.risk_band
         cov = work_risk.evidence_coverage
@@ -503,7 +515,7 @@ with tab_investigate:
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
                 <div>
                     <div style="font-size: 0.8rem; font-weight: 700; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase;">
-                        PROJECT INVESTIGATION DOSSIER • DTL ID: {int(float(meta.get('work_recommendation_dtl_id')))}
+                        PROJECT INVESTIGATION DOSSIER • DTL ID: {dtl_disp}
                     </div>
                     <h2 style="margin: 4px 0 8px 0; color: #f0f6fc; font-size: 1.45rem;">
                         {w_id}
