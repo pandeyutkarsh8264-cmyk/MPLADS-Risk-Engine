@@ -30,7 +30,18 @@ from src.ui_helpers import (
     get_risk_badge_html,
     get_confidence_badge_html,
     format_inr,
+    format_display_date,
+    clean_html,
     get_metric_card_html,
+    render_executive_console_html,
+    render_risk_concentration_html,
+    render_evidence_governance_html,
+    render_case_dossier_header_html,
+    render_milestone_timeline_html,
+    render_math_breakdown_html,
+    synthesize_plain_language_narrative,
+    render_risk_drivers_html,
+    render_duplicate_comparison_html,
     RISK_COLORS
 )
 from src.peer_benchmark import PeerBenchmarkEngine
@@ -41,7 +52,7 @@ from src.fusion import RiskFusionEngine, WorkRisk
 
 # Page Configuration
 st.set_page_config(
-    page_title="MPLADS Risk Intelligence Command Center",
+    page_title="MPPrisma — Risk Intelligence & Investigation Platform",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -142,10 +153,13 @@ st.markdown("""
             <div style="font-size: 0.85rem; font-weight: 700; color: #58a6ff; letter-spacing: 1.5px; text-transform: uppercase;">
                 MoSPI • 18th Lok Sabha Intelligence System
             </div>
-            <h1 style="font-size: 1.85rem; margin: 4px 0 6px 0; color: #f0f6fc; letter-spacing: -0.5px;">
-                MPLADS Risk Intelligence & Investigation Engine
+            <h1 style="font-size: 1.95rem; margin: 4px 0 2px 0; color: #f0f6fc; letter-spacing: -0.5px;">
+                MPPrisma
             </h1>
-            <div style="font-size: 0.85rem; color: #8b949e;">
+            <div style="font-size: 1.05rem; font-weight: 500; color: #79c0ff; margin-bottom: 4px;">
+                Risk Intelligence & Investigation Platform
+            </div>
+            <div style="font-size: 0.82rem; color: #8b949e;">
                 SIH26102 Authoritative Screening • Multi-Engine Evidence Fusion • 106,261 Validated Projects
             </div>
         </div>
@@ -249,194 +263,208 @@ st.sidebar.markdown("""
 
 
 # =============================================================================
-# MAIN NAVIGATION TABS
+# MAIN NAVIGATION TABS (A through F)
 # =============================================================================
 
-tab_exec, tab_queue, tab_investigate, tab_dist, tab_meta = st.tabs([
-    "📊 Executive Dashboard",
-    "📋 Ranked Risk Queue",
-    "🔍 Work Investigation View",
-    "📈 Risk Distributions",
+tab_cmd, tab_queue, tab_investigate, tab_compare, tab_dataset, tab_meta = st.tabs([
+    "🏛️ Command Center",
+    "📋 Risk Queue",
+    "🔍 Investigation",
+    "⚖️ Compare / Overlap",
+    "📁 Analyze Your Dataset",
     "ℹ️ Methodology & Provenance"
 ])
 
 
 # =============================================================================
-# TAB 1: EXECUTIVE DASHBOARD
+# A. COMMAND CENTER
 # =============================================================================
 
-with tab_exec:
-    st.markdown("### 🏛️ Portfolio Executive Overview")
-    st.markdown(
-        "Real-time screening KPIs computed across the active 18th Lok Sabha MPLADS works "
-        "using availability-normalized multi-engine evidence fusion."
-    )
-
+with tab_cmd:
     # Calculate actual computed portfolio metrics
     crit_count = int((df_filtered["risk_band"] == "CRITICAL").sum())
     high_count = int((df_filtered["risk_band"] == "HIGH").sum())
     med_count = int((df_filtered["risk_band"] == "MEDIUM").sum())
     low_count = int((df_filtered["risk_band"] == "LOW").sum())
+    total_screened = len(df_filtered)
     scored_count = int(df_filtered["risk_score"].notna().sum())
     
     avg_score = df_filtered["risk_score"].dropna().mean() if scored_count > 0 else 0.0
-    avg_coverage = df_filtered["available_weight_pct"].dropna().mean() if len(df_filtered) > 0 else 0.0
+    avg_coverage = df_filtered["available_weight_pct"].dropna().mean() if total_screened > 0 else 0.0
     priority_count = crit_count + high_count
 
-    # KPI Cards Row 1
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    with kpi1:
-        st.markdown(get_metric_card_html("Total Screened Works", f"{len(df_filtered):,}", f"Computed scores: {scored_count:,}"), unsafe_allow_html=True)
-    with kpi2:
-        st.markdown(get_metric_card_html("Priority Investigation", f"{priority_count:,}", "Critical + High priority works", border_color="#da3633"), unsafe_allow_html=True)
-    with kpi3:
-        st.markdown(get_metric_card_html("Avg Risk Score", f"{avg_score:.1f} / 100", "Availability-normalized", border_color="#58a6ff"), unsafe_allow_html=True)
-    with kpi4:
-        st.markdown(get_metric_card_html("Avg Evidence Coverage", f"{avg_coverage:.1f}%", "Active locked module weight", border_color="#238636"), unsafe_allow_html=True)
+    # 1. PORTFOLIO STATE: Sovereign Executive Console Banner (Unified Intelligence, not floating cards)
+    st.markdown(render_executive_console_html(
+        total_screened=total_screened,
+        scored_count=scored_count,
+        priority_count=priority_count,
+        avg_score=avg_score,
+        avg_coverage=avg_coverage,
+        low_count=low_count,
+        crit_count=crit_count,
+        high_count=high_count
+    ), unsafe_allow_html=True)
 
-    # KPI Cards Row 2 (Risk Bands)
-    b1, b2, b3, b4 = st.columns(4)
-    with b1:
-        st.markdown(get_metric_card_html("Critical Risk (80–100)", f"{crit_count:,}", f"{(crit_count/max(1, len(df_filtered))*100):.2f}% of portfolio", border_color="#da3633"), unsafe_allow_html=True)
-    with b2:
-        st.markdown(get_metric_card_html("High Risk (60–79)", f"{high_count:,}", f"{(high_count/max(1, len(df_filtered))*100):.2f}% of portfolio", border_color="#db6d28"), unsafe_allow_html=True)
-    with b3:
-        st.markdown(get_metric_card_html("Medium Risk (30–59)", f"{med_count:,}", f"{(med_count/max(1, len(df_filtered))*100):.1f}% of portfolio", border_color="#d29922"), unsafe_allow_html=True)
-    with b4:
-        st.markdown(get_metric_card_html("Low Risk (0–29)", f"{low_count:,}", f"{(low_count/max(1, len(df_filtered))*100):.1f}% of portfolio", border_color="#238636"), unsafe_allow_html=True)
+    # 2. WHAT STANDS OUT: Dual Analytical Panels (Risk Concentration vs Evidence Governance)
+    col_anal_l, col_anal_r = st.columns([1, 1])
+    with col_anal_l:
+        st.markdown(render_risk_concentration_html(
+            low_c=low_count,
+            med_c=med_count,
+            high_c=high_count,
+            crit_c=crit_count,
+            total_c=total_screened
+        ), unsafe_allow_html=True)
 
-    st.markdown("---")
+    with col_anal_r:
+        st.markdown(render_evidence_governance_html(), unsafe_allow_html=True)
 
-    # Fast Executive Summary Section
-    col_summary_l, col_summary_r = st.columns([3, 2])
-    with col_summary_l:
-        st.markdown("#### 🚨 Immediate Attention Highlights")
-        # Top 5 highest risk works in current selection
-        top_critical = df_filtered.sort_values(by="risk_score", ascending=False).head(5)
-        for _, row in top_critical.iterrows():
-            r_score = row.get("risk_score")
-            r_band = row.get("risk_band")
-            raw_wid = row.get("work_id")
-            raw_dtl = row.get("work_recommendation_dtl_id")
-            dtl_disp = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else "UNKNOWN"
-            w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
-            desc = row.get("work_description") or ""
-            mp = row.get("mp_name") or ""
-            loc = f"{row.get('constituency')}, {row.get('state')}"
-            rec_amt = format_inr(row.get("amount_recommended"))
-            
-            st.markdown(f"""
-            <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight: 700; color: #f0f6fc; font-size: 0.95rem;">{w_id}</div>
-                    <div>{get_risk_badge_html(r_band, r_score)}</div>
+    # 3. WHERE TO LOOK NEXT: Executive Priority Review Ledger
+    st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
+    st.markdown("#### 🚨 Priority Action Ledger — Urgent Administrative Review")
+    st.markdown("Actionable previews of highest-variance projects flagged for acute cost divergence, milestone delay, or candidate overlap:")
+
+    top_critical = df_filtered.sort_values(by="risk_score", ascending=False).head(4)
+    if not top_critical.empty:
+        pri_cols = st.columns(len(top_critical))
+        for idx, (_, row) in enumerate(top_critical.iterrows()):
+            with pri_cols[idx]:
+                r_score = row.get("risk_score")
+                r_band = row.get("risk_band")
+                raw_wid = row.get("work_id")
+                raw_dtl = row.get("work_recommendation_dtl_id")
+                dtl_disp = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else 0
+                w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
+                desc = row.get("work_description") or ""
+                rec_amt = format_inr(row.get("amount_recommended"))
+                loc = f"{row.get('constituency')}, {row.get('state')}"
+                cov_val = row.get("available_weight_pct")
+                cov_disp = f"{cov_val:.0f}%" if pd.notna(cov_val) else "—"
+
+                st.markdown(f"""
+                <div style="background-color: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; height: 210px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">CASE #{idx+1}</span>
+                            {get_risk_badge_html(r_band, r_score)}
+                        </div>
+                        <div style="font-size: 0.88rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px;">{w_id}</div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">📍 {loc}</div>
+                        <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.35; overflow: hidden; max-height: 44px;">
+                            {desc[:85]}...
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #1e293b; padding-top: 6px; display: flex; justify-content: space-between; font-size: 0.78rem; color: #94a3b8;">
+                        <span>Sanction: <strong style="color: #f8fafc;">{rec_amt}</strong></span>
+                        <span>Coverage: <strong style="color: #38bdf8;">{cov_disp}</strong></span>
+                    </div>
                 </div>
-                <div style="font-size: 0.85rem; color: #8b949e; margin: 4px 0;">{desc[:120]}...</div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #c9d1d9;">
-                    <span>👤 {mp} • 📍 {loc}</span>
-                    <span>💰 Recommended: <strong>{rec_amt}</strong></span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with col_summary_r:
-        st.markdown("#### ⚖️ Evidence Integrity Principle")
-        st.markdown("""
-        <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px;">
-            <div style="font-size: 0.95rem; font-weight: 600; color: #58a6ff; margin-bottom: 8px;">
-                Availability-Normalized Scoring
-            </div>
-            <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.5;">
-                Missing/unavailable modules are strictly <strong>excluded from the denominator</strong> rather than treated as zero.
-            </div>
-            <div style="background-color: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 0.8rem; color: #79c0ff;">
-                Risk Score = Σ(w_m · S_m) / Σ(w_m)<br>
-                Coverage % = Σ(w_m) × 100%
-            </div>
-            <div style="font-size: 0.8rem; color: #8b949e; line-height: 1.4;">
-                • <strong>Risk Score ≠ Evidence Coverage</strong><br>
-                • Level 3 Physical Progress is strictly <code>UNAVAILABLE_IN_SOURCE</code> (never fabricated).<br>
-                • Missing expenditure is treated as data unavailability, not financial compliance.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
+                if st.button(f"🔍 Open Case File #{idx+1}", key=f"cmd_inv_{dtl_disp}"):
+                    st.session_state["selected_dtl_id"] = dtl_disp
+                    st.success(f"Selected DTL {dtl_disp}. Navigate to '🔍 Investigation' tab to view dossier.")
 
 
 # =============================================================================
-# TAB 2: RANKED RISK QUEUE
+# B. RISK QUEUE
 # =============================================================================
 
 with tab_queue:
     st.markdown("### 📋 Ranked Portfolio Risk Queue")
     st.markdown("Sortable register of evaluated projects prioritized by composite risk score.")
 
-    col_sort_l, col_sort_r = st.columns([2, 1])
+    col_sort_l, col_sort_m, col_sort_r = st.columns([2, 2, 2])
     with col_sort_l:
         top_n = st.selectbox("Display Count", [50, 100, 250, 500, "All Matching"], index=0)
-    with col_sort_r:
+    with col_sort_m:
         sort_order = st.selectbox("Sort Order", ["Risk Score (Highest First)", "Recommended Amount (Highest First)", "Evidence Coverage (Lowest First)"])
+    with col_sort_r:
+        st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
+        show_engine_scores = st.checkbox("Show individual engine columns", value=False)
 
-    # Apply sorting
+    # Apply sorting with safe NaN handling
     df_sorted = df_filtered.copy()
     if "Risk Score" in sort_order:
-        df_sorted = df_sorted.sort_values(by="risk_score", ascending=False)
+        df_sorted = df_sorted.sort_values(by="risk_score", ascending=False, na_position="last")
     elif "Recommended Amount" in sort_order:
-        df_sorted = df_sorted.sort_values(by="amount_recommended", ascending=False)
+        df_sorted = df_sorted.sort_values(by="amount_recommended", ascending=False, na_position="last")
     elif "Coverage" in sort_order:
-        df_sorted = df_sorted.sort_values(by="available_weight_pct", ascending=True)
+        df_sorted = df_sorted.sort_values(by="available_weight_pct", ascending=True, na_position="first")
 
     if top_n != "All Matching":
         df_display = df_sorted.head(int(top_n))
     else:
         df_display = df_sorted
 
-    # Format table columns cleanly
-    table_rows = []
-    for rank, (_, r) in enumerate(df_display.iterrows(), start=1):
-        raw_wid = r.get("work_id")
-        raw_dtl = r.get("work_recommendation_dtl_id")
-        dtl_num = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else None
-        dtl_disp = str(dtl_num) if dtl_num is not None else "—"
-        wid = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
-        table_rows.append({
-            "Rank": rank,
-            "Work ID": wid,
-            "DTL ID": dtl_disp,
-            "State": str(r.get("state") or ""),
-            "Constituency": str(r.get("constituency") or ""),
-            "Category": str(r.get("category") or ""),
-            "Recommended": format_inr(r.get("amount_recommended")),
-            "Risk Score": f"{r.get('risk_score'):.2f}" if pd.notna(r.get("risk_score")) else "—",
-            "Risk Band": str(r.get("risk_band") or "UNAVAILABLE"),
-            "Coverage %": f"{r.get('available_weight_pct'):.0f}%",
-            "Peer (30%)": f"{r.get('peer_score'):.1f}" if pd.notna(r.get("peer_score")) else "—",
-            "Stat (25%)": f"{r.get('stat_score'):.1f}" if pd.notna(r.get("stat_score")) else "—",
-            "Mismatch (30%)": f"{r.get('mismatch_score'):.1f}" if pd.notna(r.get("mismatch_score")) else "—",
-            "Duplicate (15%)": f"{r.get('duplicate_score'):.1f}" if pd.notna(r.get("duplicate_score")) else "—",
-            "_dtl_id_num": dtl_num,
-        })
+    n_rows = len(df_display)
 
-    df_view = pd.DataFrame(table_rows)
-    cols_to_show = [c for c in df_view.columns if not c.startswith("_")]
-    st.dataframe(df_view[cols_to_show], use_container_width=True, hide_index=True, height=450)
+    # High-performance column construction (vectorized/list comprehensions)
+    ranks = np.arange(1, n_rows + 1)
+    raw_wids = df_display["work_id"].fillna("").astype(str).tolist()
+    raw_dtls = df_display["work_recommendation_dtl_id"].tolist()
+
+    dtl_clean_list = []
+    wid_clean_list = []
+    work_id_col = []
+
+    for wid, dtl in zip(raw_wids, raw_dtls):
+        if pd.notna(dtl) and str(dtl) not in ("nan", "None", "", "<NA>"):
+            d_str = str(int(float(dtl)))
+            dtl_num = int(float(dtl))
+        else:
+            d_str = "—"
+            dtl_num = None
+        w = wid if wid and wid not in ("nan", "None") else f"DTL_{d_str}"
+        dtl_clean_list.append(dtl_num)
+        wid_clean_list.append(w)
+        work_id_col.append(f"{w} ({d_str})")
+
+    state_col = df_display["state"].fillna("—").astype(str).tolist()
+    cat_col = df_display["category"].fillna("—").astype(str).tolist()
+    amt_col = [format_inr(a) for a in df_display["amount_recommended"].tolist()]
+    score_col = [f"{s:.2f}" if pd.notna(s) else "—" for s in df_display["risk_score"].tolist()]
+    band_col = df_display["risk_band"].fillna("UNAVAILABLE").astype(str).tolist()
+    cov_col = [f"{c:.0f}%" if pd.notna(c) else "—" for c in df_display["available_weight_pct"].tolist()]
+
+    # Exact 8 default columns
+    data_dict = {
+        "Rank": ranks,
+        "Work / DTL ID": work_id_col,
+        "State": state_col,
+        "Category": cat_col,
+        "Amount": amt_col,
+        "Risk Score": score_col,
+        "Risk Band": band_col,
+        "Coverage": cov_col,
+    }
+
+    if show_engine_scores:
+        data_dict["Peer (30%)"] = [f"{s:.1f}" if pd.notna(s) else "—" for s in df_display["peer_score"].tolist()]
+        data_dict["Stat (25%)"] = [f"{s:.1f}" if pd.notna(s) else "—" for s in df_display["stat_score"].tolist()]
+        data_dict["Mismatch (30%)"] = [f"{s:.1f}" if pd.notna(s) else "—" for s in df_display["mismatch_score"].tolist()]
+        data_dict["Duplicate (15%)"] = [f"{s:.1f}" if pd.notna(s) else "—" for s in df_display["duplicate_score"].tolist()]
+
+    df_view = pd.DataFrame(data_dict)
+    st.dataframe(df_view, use_container_width=True, hide_index=True, height=460)
 
     # Quick selector to send work directly to Investigation View
     st.markdown("#### 🔎 Select a Project for Investigation Deep Dive")
-    if not df_display.empty and table_rows:
-        opts = [f"#{r['Rank']} - {r['Work ID']} (Score: {r['Risk Score']}, Band: {r['Risk Band']}) | {r['State']}" for r in table_rows]
-        sel_idx = st.selectbox("Choose work from queue", range(len(opts)), format_func=lambda i: opts[i], index=0)
-        sel_dtl_id = table_rows[sel_idx].get("_dtl_id_num")
+    if n_rows > 0:
+        sel_limit = min(100, n_rows)
+        opts = [f"#{ranks[i]} - {wid_clean_list[i]} (Score: {score_col[i]}, Band: {band_col[i]}) | {state_col[i]}" for i in range(sel_limit)]
+        sel_idx = st.selectbox(f"Choose work from top {sel_limit} in current queue", range(len(opts)), format_func=lambda i: opts[i], index=0)
+        sel_dtl_id = dtl_clean_list[sel_idx]
         
         if st.button("🚀 Open in Work Investigation View"):
             if sel_dtl_id is not None:
                 st.session_state["selected_dtl_id"] = int(sel_dtl_id)
-                st.success(f"Selected Work DTL ID: {int(sel_dtl_id)}. Switch to 'Work Investigation View' tab.")
+                st.success(f"Selected Work DTL ID: {int(sel_dtl_id)}. Switch to '🔍 Investigation' tab to view dossier.")
             else:
                 st.warning("Selected record does not have a valid DTL ID.")
 
 
 # =============================================================================
-# TAB 3: WORK INVESTIGATION VIEW (DEEP DIVE)
+# C. INVESTIGATION (HERO EXPERIENCE — CASE DOSSIER)
 # =============================================================================
 
 with tab_investigate:
@@ -444,17 +472,17 @@ with tab_investigate:
     st.markdown("Comprehensive evidence inspection, multi-engine breakdown, and objective field/desk review actions.")
 
     # Determine which work to investigate
-    target_dtl_id = st.session_state.get("selected_dtl_id", 303957)
+    default_dtl = st.session_state.get("selected_dtl_id", 303957)
     
     # Allow manual override input
     col_target_l, col_target_r = st.columns([3, 1])
     with col_target_l:
-        manual_dtl = st.number_input("Investigate Recommendation DTL ID", value=int(target_dtl_id), step=1)
+        target_dtl_id = int(st.number_input("Investigate Recommendation DTL ID", value=int(default_dtl), step=1))
     with col_target_r:
         st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
         if st.button("Load Project Record"):
-            target_dtl_id = manual_dtl
-            st.session_state["selected_dtl_id"] = manual_dtl
+            st.session_state["selected_dtl_id"] = target_dtl_id
+            st.rerun()
 
     # Retrieve work record
     master_df = load_canonical_master_df()
@@ -496,278 +524,707 @@ with tab_investigate:
 
         work_risk = fusion_eng.fuse(work_record, p_res, s_res, m_res, d_res)
     else:
-        # Fallback mock work risk
         work_risk = None
 
     if work_risk:
-        # Work Identification Header
-        meta = work_risk.work_metadata
-        raw_wid = work_risk.work_id
-        raw_dtl = meta.get('work_recommendation_dtl_id')
-        dtl_disp = int(float(raw_dtl)) if pd.notna(raw_dtl) and str(raw_dtl) not in ("nan", "None", "") else "UNKNOWN"
-        w_id = str(raw_wid) if pd.notna(raw_wid) and str(raw_wid) not in ("nan", "None", "") else f"DTL_{dtl_disp}"
-        r_score = work_risk.risk_score
-        r_band = work_risk.risk_band
-        cov = work_risk.evidence_coverage
+        # 1. AT A GLANCE (Hero Case Dossier Header with Large Risk Block)
+        st.markdown(render_case_dossier_header_html(work_risk), unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div class="investigation-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
-                <div>
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase;">
-                        PROJECT INVESTIGATION DOSSIER • DTL ID: {dtl_disp}
-                    </div>
-                    <h2 style="margin: 4px 0 8px 0; color: #f0f6fc; font-size: 1.45rem;">
-                        {w_id}
-                    </h2>
-                    <div style="font-size: 1rem; color: #e6edf3; margin-bottom: 12px; line-height: 1.4;">
-                        {meta.get('work_description') or 'No description provided in recommendation record.'}
-                    </div>
+        # 2. WHY THIS RISK EXISTS (WHY IS THIS WORK FLAGGED?)
+        st.markdown("#### 🔍 Why Is This Work Flagged?")
+        st.markdown(synthesize_plain_language_narrative(work_risk, p_res, s_res, m_res, d_res), unsafe_allow_html=True)
+
+        # 3. WHICH ENGINES CONTRIBUTED (TOP RISK DRIVERS)
+        st.markdown("#### ⚡ Top Risk Drivers")
+        st.markdown(render_risk_drivers_html(work_risk, p_res, s_res, m_res, d_res), unsafe_allow_html=True)
+
+        # 4. HOW THE RISK SCORE WAS BUILT (Engine Contribution Math Table)
+        st.markdown(render_math_breakdown_html(work_risk), unsafe_allow_html=True)
+
+        # 5. SUPPORTING TECHNICAL EVIDENCE (Expandable Accordions — Collapsed by Default)
+        st.markdown("#### 🔬 Supporting Technical Evidence")
+        st.markdown("Detailed diagnostic distributions, cohort calculations, and provenance verification:")
+
+        # Expander 1: Peer Benchmarking
+        with st.expander("▾ View Peer Benchmark Evidence (Cohort & Distribution)"):
+            p_score = work_risk.module_scores.get("peer_benchmarking")
+            p_badge = get_risk_badge_html('PEER', p_score) if p_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
+            st.markdown(f"""
+            <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #f0f6fc; font-size: 0.95rem;">Peer Benchmarking Engine (Locked Base Weight: 30%)</strong>
+                    {p_badge}
                 </div>
-                <div style="text-align: right;">
-                    {get_risk_badge_html(r_band, r_score)}
-                    <div style="margin-top: 6px; font-size: 0.8rem; color: #8b949e;">
-                        Evidence Coverage: <strong style="color: #58a6ff;">{cov.get('available_weight_pct'):.1f}%</strong>
-                    </div>
+                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.5; margin-bottom: 8px;">
+                    {p_res.get('evidence')}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; font-size: 0.8rem; color: #8b949e; border-top: 1px solid #21262d; padding-top: 8px;">
+                    <div>Cohort Level: <strong style="color: #f0f6fc;">Step {p_res.get('cohort_level')}: {p_res.get('cohort_level_name')}</strong></div>
+                    <div>Cohort Size (n): <strong style="color: #f0f6fc;">{p_res.get('cohort_size')}</strong></div>
+                    <div>Peer Median: <strong style="color: #f0f6fc;">{format_inr(p_res.get('peer_median'))}</strong></div>
+                    <div>Peer IQR: <strong style="color: #f0f6fc;">{format_inr(p_res.get('peer_iqr'))}</strong></div>
+                    <div>Percentile Rank: <strong style="color: #58a6ff;">{p_res.get('percentile_rank') or 0:.1f}th</strong></div>
+                    <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(p_res.get('reason_codes', []))}</code></div>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #30363d;">
-                <div><span style="color: #8b949e; font-size: 0.75rem; text-transform: uppercase;">MP Name</span><br><strong style="color: #f0f6fc;">{meta.get('mp_name') or 'Unknown'}</strong></div>
-                <div><span style="color: #8b949e; font-size: 0.75rem; text-transform: uppercase;">State & Constituency</span><br><strong style="color: #f0f6fc;">{meta.get('constituency')}, {meta.get('state')}</strong></div>
-                <div><span style="color: #8b949e; font-size: 0.75rem; text-transform: uppercase;">Category</span><br><strong style="color: #f0f6fc;">{meta.get('category')}</strong></div>
-                <div><span style="color: #8b949e; font-size: 0.75rem; text-transform: uppercase;">Current Stage</span><br><strong style="color: #58a6ff;">{meta.get('work_stage')}</strong></div>
+            """, unsafe_allow_html=True)
+
+        # Expander 2: Statistical Outliers
+        with st.expander("▾ View Statistical Outlier Evidence (Modified Z-Score Features)"):
+            s_score = work_risk.module_scores.get("statistical_outliers")
+            s_badge = get_risk_badge_html('STAT', s_score) if s_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
+            st.markdown(f"""
+            <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #f0f6fc; font-size: 0.95rem;">Statistical Outlier Engine (Locked Base Weight: 25%)</strong>
+                    {s_badge}
+                </div>
+                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.5; margin-bottom: 8px;">
+                    {s_res.get('evidence')}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 0.8rem; color: #8b949e; border-top: 1px solid #21262d; padding-top: 8px;">
+                    <div>Features Evaluated: <strong style="color: #f0f6fc;">{s_res.get('features_available')}/{s_res.get('features_total')}</strong></div>
+                    <div>Zero-Dispersion Safety: <strong style="color: #3fb950;">ACTIVE</strong></div>
+                    <div>Coverage Status: <strong style="color: #58a6ff;">{s_res.get('coverage')}</strong></div>
+                    <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(s_res.get('reason_codes', []))}</code></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Expander 3: Financial-Execution Mismatch
+        with st.expander("▾ View Financial–Execution Mismatch Evidence"):
+            m_score = work_risk.module_scores.get("financial_execution_mismatch")
+            m_badge = get_risk_badge_html('MISMATCH', m_score) if m_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
+            m_conf = m_res.get("confidence_label", "Level 1 (LOW)")
+            st.markdown(f"""
+            <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #f0f6fc; font-size: 0.95rem;">Financial–Execution Mismatch Engine (Locked Base Weight: 30%)</strong>
+                    {m_badge}
+                </div>
+                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.5; margin-bottom: 8px;">
+                    {m_res.get('evidence', 'Financial disbursement and completion realization analysis.')}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 0.8rem; color: #8b949e; border-top: 1px solid #21262d; padding-top: 8px;">
+                    <div>Confidence Tier: <strong style="color: #58a6ff;">{m_conf}</strong></div>
+                    <div>Availability: <strong style="color: {'#3fb950' if m_res.get('available') else '#8b949e'};">{'AVAILABLE' if m_res.get('available') else 'UNAVAILABLE_IN_SOURCE'}</strong></div>
+                    <div>Disbursement Status: <strong style="color: #f0f6fc;">{format_inr(work_record.get('total_disbursed_amount'))}</strong></div>
+                    <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(m_res.get('reason_codes', []))}</code></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Expander 4: Duplicate & Overlap Candidate Evidence
+        with st.expander("▾ View Contextual Duplicate / Overlap Evidence"):
+            st.markdown(render_duplicate_comparison_html(work_record, d_res), unsafe_allow_html=True)
+            if len(d_res.get("top_matches", [])) > 1:
+                st.markdown("##### Additional Contextual Candidates")
+                dup_table = []
+                for m in d_res["top_matches"][1:]:
+                    m_dtl = m.get("matched_work_dtl_id")
+                    m_dtl_str = str(int(float(m_dtl))) if m_dtl is not None and str(m_dtl) != "" else ""
+                    dup_table.append({
+                        "Candidate DTL ID": m_dtl_str,
+                        "Classification": str(m.get("classification") or ""),
+                        "Semantic Cosine": f"{float(m.get('semantic_cosine_similarity', 0.0)):.3f}",
+                        "Agency Similarity": f"{float(m.get('agency_similarity', 0.0)):.1f}%",
+                        "Same MP": "Yes" if m.get("same_mp") else "No",
+                        "Candidate Description": str(m.get("matched_work_description") or "")[:120]
+                    })
+                st.dataframe(pd.DataFrame(dup_table), use_container_width=True, hide_index=True)
+
+        # 6. RISK JOURNEY (Authentic Milestone Progression)
+        st.markdown("#### 🛣️ Authentic Milestone Progression")
+        st.markdown(render_milestone_timeline_html(work_record), unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # 7. WHAT SHOULD BE CHECKED? (INVESTIGATION ACTIONS)
+        st.markdown("### 📋 What Should Be Checked?")
+        st.markdown(
+            "Concrete, objective field and administrative verification checks based on the recorded anomalies. "
+            "Tailored for desk review auditors and field inspection teams."
+        )
+
+        desk_actions = [a for a in work_risk.investigation_actions if any(k in a.lower() for k in ("desk", "order", "document", "estimate", "approval", "sanction", "voucher", "disbursement"))]
+        field_actions = [a for a in work_risk.investigation_actions if a not in desk_actions]
+
+        col_act_l, col_act_r = st.columns(2)
+        with col_act_l:
+            st.markdown("##### 📁 Administrative & Desk Review Protocol")
+            if desk_actions:
+                for act in desk_actions:
+                    st.markdown(f'<div class="action-box">📄 {act}</div>', unsafe_allow_html=True)
+            else:
+                for act in work_risk.investigation_actions[:len(work_risk.investigation_actions)//2 or 1]:
+                    st.markdown(f'<div class="action-box">📄 {act}</div>', unsafe_allow_html=True)
+
+        with col_act_r:
+            st.markdown("##### 📍 Field Inspection & Asset Verification Protocol")
+            if field_actions:
+                for act in field_actions:
+                    st.markdown(f'<div class="action-box-field">🔍 {act}</div>', unsafe_allow_html=True)
+            else:
+                for act in work_risk.investigation_actions[len(work_risk.investigation_actions)//2 or 1:]:
+                    st.markdown(f'<div class="action-box-field">🔍 {act}</div>', unsafe_allow_html=True)
+
+
+# =============================================================================
+# D. COMPARE / OVERLAP
+# =============================================================================
+
+with tab_compare:
+    st.markdown("### ⚖️ Project Overlap & Contextual Duplicate Comparison")
+    st.markdown("Deep contextual semantic comparison and implementing agency overlap audit.")
+
+    # Selection for comparison
+    curated_overlap_options = [
+        "133166 — Dharwad, Karnataka (Community Bhavan)",
+        "133167 — Dharwad, Karnataka (Community Hall)",
+        "298980 — Dharwad, Karnataka (Community Bhavan Pry 1/A)",
+        "292696 — Dharwad, Karnataka (Cultural Bhavan)",
+        "303957 — Saran, Bihar (Modern Indoor Stadium - No Duplicate)"
+    ]
+    
+    col_comp_l, col_comp_r = st.columns([3, 1])
+    with col_comp_l:
+        sel_curated = st.selectbox("Curated Overlap Test Cases", curated_overlap_options, index=0)
+        curated_id = int(sel_curated.split("—")[0].strip())
+    with col_comp_r:
+        comp_dtl = int(st.number_input("Or Input Custom DTL ID", value=int(st.session_state.get("selected_dtl_id", curated_id)), step=1))
+
+    active_comp_id = comp_dtl
+
+    master_df = load_canonical_master_df()
+    if not master_df.empty:
+        comp_match = master_df[master_df["work_recommendation_dtl_id"] == active_comp_id]
+        if not comp_match.empty:
+            c_record = comp_match.iloc[0].to_dict()
+        else:
+            st.warning(f"DTL ID {active_comp_id} not found in master corpus. Using curated sample.")
+            c_record = master_df[master_df["work_recommendation_dtl_id"] == 133166].iloc[0].to_dict()
+    else:
+        c_record = {"work_recommendation_dtl_id": active_comp_id}
+
+    _, _, _, dup_eng_comp, _ = load_fitted_engines()
+    if dup_eng_comp is not None:
+        comp_d_res = dup_eng_comp.evaluate_work(c_record)
+        st.markdown(render_duplicate_comparison_html(c_record, comp_d_res), unsafe_allow_html=True)
+        
+        # If multiple matches exist, show table of additional matches
+        if len(comp_d_res.get("top_matches", [])) > 1:
+            st.markdown("#### 📑 Additional Block Overlap Candidates")
+            extra_table = []
+            for m in comp_d_res["top_matches"][1:]:
+                m_dtl = m.get("matched_work_dtl_id")
+                m_dtl_str = str(int(float(m_dtl))) if m_dtl is not None and str(m_dtl) != "" else ""
+                extra_table.append({
+                    "Candidate DTL ID": m_dtl_str,
+                    "Classification": str(m.get("classification") or ""),
+                    "Semantic Cosine": f"{float(m.get('semantic_cosine_similarity', 0.0)):.3f}",
+                    "Agency Match": f"{float(m.get('agency_similarity', 0.0)):.1f}%",
+                    "Same MP": "Yes" if m.get("same_mp") else "No",
+                    "Candidate Description": str(m.get("matched_work_description") or "")[:120]
+                })
+            st.dataframe(pd.DataFrame(extra_table), use_container_width=True, hide_index=True)
+
+        st.markdown("""
+        <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px 16px; margin-top: 14px;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #58a6ff; text-transform: uppercase; margin-bottom: 4px;">
+                Investigative Guidance for Overlap Candidates
+            </div>
+            <div style="font-size: 0.82rem; color: #c9d1d9; line-height: 1.5;">
+                • <strong>Do NOT treat as confirmed fraud:</strong> In public infrastructure, similar titles frequently arise when work is sanctioned in phases, split across financial years, or funded jointly across multiple programs.<br>
+                • <strong>Field Inspection Requirement:</strong> Auditors should verify whether distinct physical foundations exist at the recorded village or GPS landmark before making administrative determinations.
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Financial Realization Breakdown
-        st.markdown("#### 💰 Financial Realization Milestones")
-        f1, f2, f3, f4 = st.columns(4)
-        with f1:
-            st.markdown(get_metric_card_html("Recommended Amount", format_inr(meta.get("amount_recommended")), "Initial proposal"), unsafe_allow_html=True)
-        with f2:
-            st.markdown(get_metric_card_html("Sanctioned Amount", format_inr(meta.get("amount_sanctioned")), "Administrative approval"), unsafe_allow_html=True)
-        with f3:
-            st.markdown(get_metric_card_html("Completed Amount", format_inr(meta.get("amount_completed")), "Joined completed record"), unsafe_allow_html=True)
-        with f4:
-            st.markdown(get_metric_card_html("Disbursed Vendor Sum", format_inr(meta.get("total_disbursed_amount")), "Joined expenditure data"), unsafe_allow_html=True)
 
-        st.markdown("---")
+# =============================================================================
+# E. ANALYZE YOUR DATASET (LIVE INGESTION & COMPATIBLE SCREENING)
+# =============================================================================
 
-        # The Four Locked Engines Breakdown
-        st.markdown("### 🧩 Multi-Engine Evidence Breakdown")
+with tab_dataset:
+    st.markdown("### 📁 Analyze Your Dataset")
+    st.markdown(
+        "Independent, local-memory multi-engine screening and availability-normalized fusion "
+        "for external MPLADS, State Local Area Development, or public infrastructure project datasets."
+    )
+
+    # Dynamic workflow step indicator
+    user_df = st.session_state.get("user_input_df")
+    has_results = "user_scored_results" in st.session_state and bool(st.session_state["user_scored_results"])
+    has_data = user_df is not None and not user_df.empty
+
+    step1_style = "color: #38bdf8; font-weight: 700;" if not has_data else "color: #10b981; font-weight: 700;"
+    step2_style = "color: #38bdf8; font-weight: 700;" if (has_data and not has_results) else ("color: #10b981; font-weight: 700;" if has_results else "color: #64748b;")
+    step3_style = "color: #38bdf8; font-weight: 700;" if (has_data and not has_results) else ("color: #10b981; font-weight: 700;" if has_results else "color: #64748b;")
+    step4_style = "color: #38bdf8; font-weight: 700;" if (has_data and not has_results) else ("color: #10b981; font-weight: 700;" if has_results else "color: #64748b;")
+    step5_style = "color: #38bdf8; font-weight: 700;" if has_results else "color: #64748b;"
+
+    s1_icon = "✓" if has_data else "1"
+    s2_icon = "✓" if has_data else "2"
+    s3_icon = "✓" if has_data else "3"
+    s4_icon = "✓" if has_results else "4"
+    s5_icon = "★" if has_results else "5"
+
+    st.markdown(clean_html(f"""
+    <div style="background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px 18px; margin: 12px 0 20px 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 0.76rem;">
+            <span style="{step1_style}">[{s1_icon}] 01 UPLOAD</span>
+            <span style="color: #475569;">➔</span>
+            <span style="{step2_style}">[{s2_icon}] 02 VALIDATE & MAP</span>
+            <span style="color: #475569;">➔</span>
+            <span style="{step3_style}">[{s3_icon}] 03 DETECT ENGINES</span>
+            <span style="color: #475569;">➔</span>
+            <span style="{step4_style}">[{s4_icon}] 04 SCREEN & FUSE</span>
+            <span style="color: #475569;">➔</span>
+            <span style="{step5_style}">[{s5_icon}] 05 RESULTS</span>
+        </div>
+    </div>
+    """), unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # 01. UPLOAD & DATASET SELECTION
+    # -------------------------------------------------------------------------
+    st.markdown("#### 01. Upload Dataset or Load Demo")
+    
+    col_up_l, col_up_r = st.columns([3, 1])
+    with col_up_l:
+        uploaded_file = st.file_uploader(
+            "Upload Infrastructure Dataset (.csv, .xlsx, .parquet)",
+            type=["csv", "xlsx", "parquet"],
+            help="Upload structured files containing public work recommendations, sanctions, or expenditure records.",
+            key="user_dataset_uploader"
+        )
+    with col_up_r:
+        st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+        demo_clicked = st.button("📊 Load Demo Dataset (10 Works)", use_container_width=True)
+
+    sample_csv = (
+        "work_recommendation_dtl_id,unique_work_number,state,constituency,district,block_name,category,work_description,amount_recommended,amount_sanctioned,sanction_date,work_stage\n"
+        "303957,WS/MP620/2024-2025/303957,Bihar,SARAN,SARAN,Amnaur,Normal/Others,Construction of Community Facility,10000000,10000000,2024-08-14,Pending for Sanction\n"
+        "133166,WS/MP620/2024-2025/133166,Karnataka,DHARWAD,DHARWAD,Navalgund,Community Hall,Construction of Community Hall,497000,497000,2024-06-10,Physical Inspection\n"
+        "133301,WS/MP620/2024-2025/133301,Karnataka,DHARWAD,DHARWAD,Navalgund,Community Hall,Construction of Community Hall at Village,497000,497000,2024-06-10,Completed\n"
+    )
+    col_dl, col_clr = st.columns([3, 1])
+    with col_dl:
+        st.download_button(
+            label="📥 Download Canonical Data Template (CSV)",
+            data=sample_csv,
+            file_name="mpprisma_canonical_template.csv",
+            mime="text/csv",
+            use_container_width=False
+        )
+    with col_clr:
+        if has_data:
+            if st.button("🗑️ Reset / Clear Dataset", use_container_width=True):
+                st.session_state.pop("user_input_df", None)
+                st.session_state.pop("user_dataset_meta", None)
+                st.session_state.pop("user_scored_results", None)
+                st.rerun()
+
+    # Ingestion handling
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                user_df = pd.read_csv(uploaded_file)
+            elif uploaded_file.name.endswith(".parquet"):
+                user_df = pd.read_parquet(uploaded_file)
+            else:
+                user_df = pd.read_excel(uploaded_file)
+            
+            curr_meta = st.session_state.get("user_dataset_meta", {})
+            if curr_meta.get("source_name") != uploaded_file.name:
+                st.session_state.pop("user_scored_results", None)
+
+            st.session_state["user_input_df"] = user_df
+            st.session_state["user_dataset_meta"] = {
+                "source_name": uploaded_file.name,
+                "is_demo": False,
+                "row_count": len(user_df),
+                "col_count": len(user_df.columns)
+            }
+        except Exception as e:
+            st.error(f"⚠️ Unable to parse uploaded file: {str(e)[:160]}. Please verify the file format.")
+            user_df = None
+
+    elif demo_clicked:
+        master_df = load_canonical_master_df()
+        if not master_df.empty:
+            cols_avail = [c for c in [
+                "work_recommendation_dtl_id", "unique_work_number", "state", "constituency",
+                "district", "block_name", "category", "work_description", "amount_recommended",
+                "amount_sanctioned", "sanction_date", "work_stage"
+            ] if c in master_df.columns]
+            demo_df = master_df.head(10)[cols_avail].copy()
+            st.session_state["user_input_df"] = demo_df
+            st.session_state["user_dataset_meta"] = {
+                "source_name": "Pre-configured 10-Work Demonstration Cohort",
+                "is_demo": True,
+                "row_count": len(demo_df),
+                "col_count": len(demo_df.columns)
+            }
+            st.session_state.pop("user_scored_results", None)
+            user_df = demo_df
+            st.rerun()
+    elif "user_input_df" in st.session_state:
+        user_df = st.session_state["user_input_df"]
+
+    if user_df is not None and user_df.empty:
+        st.warning("⚠️ The uploaded dataset contains 0 records. Please upload a dataset with at least one record.")
+        user_df = None
+
+    if user_df is not None and not user_df.empty:
+        meta = st.session_state.get("user_dataset_meta", {})
+        source_label = meta.get("source_name", "Uploaded File")
+        demo_badge = " • DEMONSTRATION DATASET" if meta.get("is_demo") else " • USER-UPLOADED DATA"
         
-        m_col1, m_col2 = st.columns(2)
-        
-        # Engine 1: Peer Benchmarking
-        with m_col1:
-            p_score = work_risk.module_scores.get("peer_benchmarking")
-            p_badge = get_risk_badge_html('PEER', p_score) if p_score is not None else '<span style="color:#8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
-            <div class="module-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #f0f6fc; font-size: 1rem;">
-                        1. Peer Benchmarking (30%)
-                    </div>
-                    <div>{p_badge}</div>
+        preview_cols = list(user_df.columns)[:8]
+        preview_cols_str = ", ".join([f"<code>{c}</code>" for c in preview_cols])
+        if len(user_df.columns) > 8:
+            preview_cols_str += "..."
+
+        st.markdown(clean_html(f"""
+        <div style="background: #111827; border: 1px solid #1e293b; border-left: 4px solid #38bdf8; border-radius: 6px; padding: 12px 16px; margin: 14px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.6px;">Active Ingested Dataset{demo_badge}</span>
+                    <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 2px;">{source_label}</div>
                 </div>
-                <div style="font-size: 0.82rem; color: #8b949e; margin-bottom: 8px;">
-                    Cohort Level: <strong>Step {p_res.get('cohort_level')}: {p_res.get('cohort_level_name')} (n={p_res.get('cohort_size')})</strong>
-                </div>
-                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.4; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #21262d;">
-                    {p_res.get('evidence')}
-                </div>
-                <div style="margin-top: 8px; font-size: 0.78rem; color: #8b949e;">
-                    Cohort Median: <strong>{format_inr(p_res.get('peer_median'))}</strong> • IQR: <strong>{format_inr(p_res.get('peer_iqr'))}</strong> • Percentile: <strong>{p_res.get('percentile_rank') or 0:.1f}th</strong>
+                <div style="display: flex; gap: 14px; font-size: 0.82rem; color: #94a3b8;">
+                    <div>Rows: <strong style="color: #f8fafc;">{len(user_df):,}</strong></div>
+                    <div>Columns: <strong style="color: #f8fafc;">{len(user_df.columns)}</strong></div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
-
-        # Engine 2: Statistical Outliers
-        with m_col2:
-            s_score = work_risk.module_scores.get("statistical_outliers")
-            s_badge = get_risk_badge_html('STAT', s_score) if s_score is not None else '<span style="color:#8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
-            <div class="module-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #f0f6fc; font-size: 1rem;">
-                        2. Statistical Outliers (25%)
-                    </div>
-                    <div>{s_badge}</div>
-                </div>
-                <div style="font-size: 0.82rem; color: #8b949e; margin-bottom: 8px;">
-                    Features Evaluated: <strong>{s_res.get('features_available')}/{s_res.get('features_total')} (Status: {s_res.get('coverage')})</strong>
-                </div>
-                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.4; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #21262d;">
-                    {s_res.get('evidence')}
-                </div>
-                <div style="margin-top: 8px; font-size: 0.78rem; color: #8b949e;">
-                    Zero-dispersion safety active. Missing numeric features excluded from composite.
-                </div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">
+                Detected Fields: {preview_cols_str}
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """), unsafe_allow_html=True)
 
-        st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
-        m_col3, m_col4 = st.columns(2)
-
-        # Engine 3: Financial-Execution Mismatch
-        with m_col3:
-            m_score = work_risk.module_scores.get("financial_execution_mismatch")
-            m_conf = m_res.get("confidence_label", "NONE")
-            m_badge = get_risk_badge_html('MISMATCH', m_score) if m_score is not None else '<span style="color:#8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
-            <div class="module-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #f0f6fc; font-size: 1rem;">
-                        3. Financial–Execution Mismatch (30%)
-                    </div>
-                    <div>{m_badge}</div>
-                </div>
-                <div style="font-size: 0.82rem; color: #8b949e; margin-bottom: 8px;">
-                    Evidence Tier: {get_confidence_badge_html(m_conf)}
-                </div>
-                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.4; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #21262d;">
-                    {m_res.get('evidence')}
-                </div>
-                <div style="margin-top: 8px; font-size: 0.78rem; color: #8b949e;">
-                    Level 3 Physical Progress: <span style="color: #db6d28; font-weight: 600;">UNAVAILABLE_IN_SOURCE</span> (Strictly Not Fabricated).
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Engine 4: Duplicate / Overlap
-        with m_col4:
-            d_score = work_risk.module_scores.get("duplicate_overlap")
-            d_badge = get_risk_badge_html('DUP', d_score) if d_score is not None else '<span style="color:#8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
-            <div class="module-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #f0f6fc; font-size: 1rem;">
-                        4. Duplicate / Overlap Detection (15%)
-                    </div>
-                    <div>{d_badge}</div>
-                </div>
-                <div style="font-size: 0.82rem; color: #8b949e; margin-bottom: 8px;">
-                    Method: <strong>all-MiniLM-L6-v2 Embeddings + RapidFuzz Entity Similarity</strong>
-                </div>
-                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.4; background-color: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #21262d;">
-                    {d_res.get('evidence')}
-                </div>
-                <div style="margin-top: 8px; font-size: 0.78rem; color: #8b949e;">
-                    Candidates Evaluated: <strong>{d_res.get('candidates_evaluated', 0)}</strong> within contextual candidate block.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Duplicate Matches Detail (if any matches found)
-        if d_res.get("top_matches"):
-            st.markdown("##### 👥 Contextual Duplicate Candidate Pairings")
-            dup_table = []
-            for m in d_res["top_matches"]:
-                m_dtl = m.get("matched_work_dtl_id")
-                m_dtl_str = str(int(float(m_dtl))) if m_dtl is not None and str(m_dtl) != "" else ""
-                dup_table.append({
-                    "Matched DTL ID": m_dtl_str,
-                    "Classification": str(m.get("classification") or ""),
-                    "Semantic Cosine": f"{float(m.get('semantic_cosine_similarity', 0.0)):.3f}",
-                    "Agency Similarity": f"{float(m.get('agency_similarity', 0.0)):.1f}%",
-                    "Same MP": "Yes" if m.get("same_mp") else "No",
-                    "Similar Cost": "Yes" if m.get("similar_amount") else "No",
-                    "Matched Description": str(m.get("matched_work_description") or "")[:120]
-                })
-            st.dataframe(pd.DataFrame(dup_table), use_container_width=True, hide_index=True)
-
+        # ---------------------------------------------------------------------
+        # 02. VALIDATE & MAP
+        # ---------------------------------------------------------------------
         st.markdown("---")
-
-        # Concrete Investigation Actions Section
-        st.markdown("### 📋 Recommended Investigation Next Steps")
+        st.markdown("#### 02. Validate Schema & Map Compatible Columns")
         st.markdown(
-            "Concrete, objective field and administrative verification checks based on the recorded anomalies. "
-            "Designed for field inspection officers and desk auditors."
+            "Inspect how your dataset fields align with the canonical data model. "
+            "Columns are mapped safely without inventing missing values or fabricating source fields."
         )
 
-        for act in work_risk.investigation_actions:
-            st.markdown(f"""
-            <div class="action-box">
-                👉 {act}
+        col_map = {str(c).strip().lower(): c for c in user_df.columns}
+
+        mapping_definitions = [
+            ("amount_recommended", "Recommended Cost", ["amount_recommended", "recommended_amount", "amount", "cost", "sanction_amount_proposed", "estimated_cost", "work_cost"], "Required for 3 engines (Peer, Stat, Mismatch)"),
+            ("district", "District", ["district", "dist", "district_name"], "Required for local peer benchmarking"),
+            ("category", "Work Category", ["category", "work_category", "sector", "work_type"], "Required for peer benchmarking cohort matching"),
+            ("state", "State", ["state", "state_name"], "Optional — Fallback state/regional cohort level"),
+            ("work_description", "Work Description", ["work_description", "description", "title", "work_name", "work_detail"], "Required for contextual duplicate/overlap engine"),
+            ("block_name", "Block / Agency", ["block_name", "block", "ida_name_raw", "implementing_agency", "agency"], "Required for duplicate blocking candidate generation"),
+            ("sanction_date", "Sanction Date", ["sanction_date", "sanctioned_date", "date_sanctioned", "admin_sanction_date"], "Optional — Enhances financial mismatch & timeline analysis"),
+            ("amount_sanctioned", "Sanctioned Cost", ["amount_sanctioned", "sanctioned_amount", "sanction_amount"], "Optional — Enhances outlier cost ratios & financial mismatch"),
+            ("work_recommendation_dtl_id", "Record Identifier", ["work_recommendation_dtl_id", "dtl_id", "work_id", "unique_work_number", "id", "recommendation_id"], "Optional — Work identifier for audit traceability")
+        ]
+
+        mapping_rows = []
+        mapped_concepts = {}
+        for std_key, concept_title, aliases, role_desc in mapping_definitions:
+            matched_col = None
+            for alias in aliases:
+                if alias in col_map:
+                    matched_col = col_map[alias]
+                    break
+            
+            if matched_col is not None:
+                mapped_concepts[std_key] = matched_col
+                status_badge = "✅ Mapped"
+            elif "Required" in role_desc:
+                status_badge = "⚠️ Missing (Engine Dependency)"
+            else:
+                status_badge = "ℹ️ Not Provided (Optional)"
+
+            mapping_rows.append({
+                "Canonical Field": concept_title,
+                "Source Column": str(matched_col) if matched_col else "—",
+                "Role / Dependency": role_desc,
+                "Mapping Status": status_badge
+            })
+
+        st.dataframe(pd.DataFrame(mapping_rows), use_container_width=True, hide_index=True)
+        
+        mapped_count = len(mapped_concepts)
+        total_concepts = len(mapping_definitions)
+        st.markdown(
+            f"<div style='font-size: 0.8rem; color: #94a3b8; margin-top: 4px;'>"
+            f"Validation Status: <strong style='color: #10b981;'>{mapped_count} of {total_concepts}</strong> canonical concepts mapped. "
+            f"Missing fields are excluded rather than filled with synthetic defaults."
+            f"</div>",
+            unsafe_allow_html=True
+        )
+
+        # ---------------------------------------------------------------------
+        # 03. COMPATIBLE ENGINE DETECTION
+        # ---------------------------------------------------------------------
+        st.markdown("---")
+        st.markdown("#### 03. Engine Compatibility Matrix")
+        st.markdown(
+            "Evaluation of which official MPPrisma analytical engines can safely run on the mapped dataset fields. "
+            "Engines with missing dependencies are excluded from fusion."
+        )
+
+        has_amt = "amount_recommended" in mapped_concepts
+        has_dist = "district" in mapped_concepts
+        has_cat = "category" in mapped_concepts
+        has_st = "state" in mapped_concepts
+        has_desc = "work_description" in mapped_concepts
+        has_block = "block_name" in mapped_concepts
+        has_sanc_date = "sanction_date" in mapped_concepts
+        has_sanc_amt = "amount_sanctioned" in mapped_concepts
+
+        compat_peer = has_amt and has_cat and (has_dist or has_st)
+        compat_stat = has_amt
+        compat_mis = has_amt and (has_sanc_date or has_sanc_amt)
+        compat_dup = has_desc and (has_block or has_dist)
+
+        compat_rows = [
+            {
+                "Engine Module": "1. Peer Benchmarking (30% base weight)",
+                "Required Evidence": "amount_recommended, category, district/state",
+                "Status": "✅ COMPATIBLE" if compat_peer else "❌ INCOMPATIBLE",
+                "Operational Context": "Evaluates cost percentile against historical cohorts" if compat_peer else "Requires numeric recommended cost and category"
+            },
+            {
+                "Engine Module": "2. Statistical Outliers (25% base weight)",
+                "Required Evidence": "amount_recommended",
+                "Status": "✅ COMPATIBLE" if compat_stat else "❌ INCOMPATIBLE",
+                "Operational Context": "Evaluates Modified Z-Scores across numeric distributions" if compat_stat else "Requires positive numeric cost"
+            },
+            {
+                "Engine Module": "3. Financial–Execution Mismatch (30% base weight)",
+                "Required Evidence": "amount_recommended, sanction_date / amount_sanctioned",
+                "Status": "✅ COMPATIBLE" if compat_mis else "❌ INCOMPATIBLE",
+                "Operational Context": "Detects timing delays and financial sanction divergence" if compat_mis else "Requires sanction date or sanctioned amount"
+            },
+            {
+                "Engine Module": "4. Duplicate / Overlap (15% base weight)",
+                "Required Evidence": "work_description, block_name / district",
+                "Status": "✅ COMPATIBLE" if compat_dup else "❌ INCOMPATIBLE",
+                "Operational Context": "Calculates semantic cosine similarity on contextual blocks" if compat_dup else "Requires textual description and block/district for blocking"
+            }
+        ]
+        st.dataframe(pd.DataFrame(compat_rows), use_container_width=True, hide_index=True)
+
+        compat_count = sum([compat_peer, compat_stat, compat_mis, compat_dup])
+        if compat_count == 0:
+            st.error("❌ Incompatible Schema: None of the 4 risk engines can operate on the detected columns. Please supply at least 'amount_recommended' or 'work_description'.")
+        else:
+            st.markdown(clean_html(f"""
+            <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 0.8rem; color: #94a3b8;">
+                ⚡ <strong>{compat_count} of 4 Engines Ready:</strong> Availability-normalized fusion will distribute 100% of the composite weight proportionally across active engines. Inactive engines are strictly excluded from the denominator.
+            </div>
+            """), unsafe_allow_html=True)
+
+        # ---------------------------------------------------------------------
+        # 04. SCREEN & FUSE
+        # ---------------------------------------------------------------------
+        st.markdown("---")
+        st.markdown("#### 04. Execute Screening & Evidence Fusion")
+        
+        if compat_count > 0:
+            btn_label = f"🚀 Screen Dataset with {compat_count} Compatible Engine{'s' if compat_count > 1 else ''}"
+            if st.button(btn_label, use_container_width=False):
+                with st.spinner("Executing multi-engine screening and availability-normalized fusion..."):
+                    peer_eng, stat_eng, mismatch_eng, dup_eng, fusion_eng = load_fitted_engines()
+                    
+                    std_df = user_df.copy()
+                    for std_k, mapped_source in mapped_concepts.items():
+                        if mapped_source in user_df.columns and std_k not in std_df.columns:
+                            std_df[std_k] = user_df[mapped_source]
+
+                    if "amount_recommended" in std_df.columns:
+                        std_df["amount_recommended"] = pd.to_numeric(std_df["amount_recommended"], errors="coerce")
+
+                    total_rows = len(std_df)
+                    eval_cap = min(100, total_rows)
+                    eval_rows = std_df.head(eval_cap)
+
+                    prog_bar = st.progress(0, text=f"Screening 0 of {eval_cap} records...")
+                    results_list = []
+
+                    for idx, (_, r) in enumerate(eval_rows.iterrows()):
+                        row_dict = r.to_dict()
+                        p_res = peer_eng.evaluate_work(row_dict) if compat_peer and peer_eng else {"available": False, "score": None}
+                        s_res = stat_eng.evaluate_work(row_dict) if compat_stat and stat_eng else {"available": False, "score": None}
+                        m_res = mismatch_eng.evaluate_work(row_dict) if compat_mis and mismatch_eng else {"available": False, "score": None}
+                        d_res = dup_eng.evaluate_work(row_dict) if compat_dup and dup_eng else {"available": False, "score": None}
+
+                        if fusion_eng:
+                            w_risk = fusion_eng.fuse(row_dict, p_res, s_res, m_res, d_res)
+                            cov = w_risk.evidence_coverage.get("available_weight_pct", 100.0)
+                            active_mods = [k for k, v in w_risk.module_scores.items() if v is not None]
+                            raw_wid = row_dict.get("unique_work_number") or row_dict.get("work_recommendation_dtl_id") or f"USER_{idx+1}"
+                            
+                            dist_str = str(row_dict.get("district") or "").strip()
+                            state_str = str(row_dict.get("state") or "").strip()
+                            loc_str = f"{dist_str}, {state_str}".strip(", ") if (dist_str or state_str) else "—"
+
+                            results_list.append({
+                                "Rank": idx + 1,
+                                "Work / DTL ID": str(raw_wid),
+                                "State / District": loc_str,
+                                "Category": str(row_dict.get("category") or "—"),
+                                "Amount": format_inr(row_dict.get("amount_recommended")),
+                                "Risk Score": f"{w_risk.risk_score:.2f}" if w_risk.risk_score is not None else "—",
+                                "Risk Band": w_risk.risk_band,
+                                "Coverage": f"{cov:.0f}%",
+                                "Active Engines": f"{len(active_mods)}/4",
+                                "_risk_score_raw": w_risk.risk_score if w_risk.risk_score is not None else 0.0
+                            })
+                        prog_bar.progress((idx + 1) / eval_cap, text=f"Screening {idx+1} of {eval_cap} records...")
+
+                    prog_bar.empty()
+                    st.session_state["user_scored_results"] = results_list
+                    st.rerun()
+
+        # ---------------------------------------------------------------------
+        # 05. RESULTS
+        # ---------------------------------------------------------------------
+        if "user_scored_results" in st.session_state and st.session_state["user_scored_results"]:
+            st.markdown("---")
+            st.markdown("#### 05. Screening Results & Evidence Dossier")
+
+            st.markdown("""
+            <div style="background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); border: 2px solid #38bdf8; border-radius: 8px; padding: 16px 20px; margin: 12px 0 20px 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 6px;">
+                    <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid #38bdf8; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase;">
+                        ⚠️ USER-PROVIDED DATA • NOT OFFICIAL MPLADS RECORDS
+                    </span>
+                    <span style="font-size: 0.75rem; color: #94a3b8; background: #21262d; padding: 2px 8px; border-radius: 4px;">
+                        Data Partition: Local Memory Only
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #c9d1d9; line-height: 1.45;">
+                    The composite risk scores, severity tiers, and evidence items below are derived exclusively from user-uploaded records. This analysis is completely segregated and <strong>does not modify official 18th Lok Sabha MPLADS datasets, portfolio metrics, or statutory queues.</strong>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("---")
+            res_data = st.session_state["user_scored_results"]
+            df_user_res = pd.DataFrame(res_data)
 
-        # Expandable Evidence Items and Traceability
-        with st.expander("🔬 Evidence Traceability & Source Provenance Details"):
-            st.markdown(
-                "Every score is mathematically bound to verifiable source evidence items from the GoI API responses."
-            )
-            ev_table = []
-            for item in work_risk.evidence_items:
-                sc = item.get("score")
-                sc_str = f"{float(sc):.1f}" if sc is not None else "—"
-                ev_table.append({
-                    "Module": str(item.get("module") or ""),
-                    "Metric": str(item.get("metric") or ""),
-                    "Available": "Yes" if item.get("available") else "No",
-                    "Score": sc_str,
-                    "Confidence": str(item.get("confidence") or "NONE"),
-                    "Observed Value": str(item.get("observed_value") or "")[:60],
-                    "Comparison Norm": str(item.get("comparison_value") or "")[:40],
-                    "Source Dataset": str(item.get("source_dataset") or ""),
-                    "Data Quality Flags": ", ".join(item.get("data_quality_flags", []))
-                })
-            st.dataframe(pd.DataFrame(ev_table), use_container_width=True, hide_index=True)
+            u_total = len(df_user_res)
+            u_crit = int((df_user_res["Risk Band"] == "CRITICAL").sum())
+            u_high = int((df_user_res["Risk Band"] == "HIGH").sum())
+            u_med = int((df_user_res["Risk Band"] == "MEDIUM").sum())
+            u_low = int((df_user_res["Risk Band"] == "LOW").sum())
+            u_avg = df_user_res["_risk_score_raw"].mean()
 
+            col_k1, col_k2, col_k3, col_k4 = st.columns(4)
+            with col_k1:
+                st.markdown(get_metric_card_html("User Works Screened", f"{u_total:,}", subtext="Processed locally"), unsafe_allow_html=True)
+            with col_k2:
+                st.markdown(get_metric_card_html("Priority Review Cohort", f"{u_crit + u_high:,}", subtext=f"Critical: {u_crit} | High: {u_high}", border_color="#ef4444" if (u_crit + u_high) > 0 else "#30363d"), unsafe_allow_html=True)
+            with col_k3:
+                st.markdown(get_metric_card_html("Mean Risk Score", f"{u_avg:.1f} / 100", subtext="Availability-normalized", border_color="#38bdf8"), unsafe_allow_html=True)
+            with col_k4:
+                st.markdown(get_metric_card_html("Low Risk / Baseline", f"{u_low:,}", subtext=f"{u_low/max(1,u_total)*100:.1f}% conforming", border_color="#10b981"), unsafe_allow_html=True)
 
-# =============================================================================
-# TAB 4: RISK DISTRIBUTIONS
-# =============================================================================
+            st.markdown(f"""
+            <div style="background: #0d1117; border: 1px solid #1e293b; border-radius: 6px; padding: 12px 16px; margin: 12px 0 16px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.74rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Risk Severity Distribution</span>
+                    <div style="display: flex; gap: 12px; font-size: 0.74rem;">
+                        <span style="color: #ef4444; font-weight: 600;">Critical: {u_crit}</span>
+                        <span style="color: #f97316; font-weight: 600;">High: {u_high}</span>
+                        <span style="color: #eab308; font-weight: 600;">Medium: {u_med}</span>
+                        <span style="color: #10b981; font-weight: 600;">Low: {u_low}</span>
+                    </div>
+                </div>
+                <div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #1e293b;">
+                    <div style="width: {u_crit/max(1,u_total)*100}%; background: #ef4444;"></div>
+                    <div style="width: {u_high/max(1,u_total)*100}%; background: #f97316;"></div>
+                    <div style="width: {u_med/max(1,u_total)*100}%; background: #eab308;"></div>
+                    <div style="width: {u_low/max(1,u_total)*100}%; background: #10b981;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-with tab_dist:
-    st.markdown("### 📈 Portfolio Risk Distributions")
-    st.markdown("Statistical distribution of risk scores, evidence coverage, and geographical patterns.")
+            st.markdown("##### Scored Work Queue")
+            show_cols = [c for c in df_user_res.columns if not c.startswith("_")]
+            st.dataframe(df_user_res[show_cols], use_container_width=True, hide_index=True)
 
-    col_ch1, col_ch2 = st.columns(2)
+            col_exp_l, col_exp_r = st.columns([3, 1])
+            with col_exp_l:
+                csv_export = df_user_res[show_cols].to_csv(index=False)
+                st.download_button(
+                    label="📥 Export Scored Results as CSV",
+                    data=csv_export,
+                    file_name="mpprisma_user_scored_results.csv",
+                    mime="text/csv"
+                )
 
-    with col_ch1:
-        st.markdown("#### Risk Band Composition")
-        band_counts = df_filtered["risk_band"].value_counts().reindex(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).fillna(0)
-        st.bar_chart(band_counts, color="#58a6ff")
-
-    with col_ch2:
-        st.markdown("#### Evidence Coverage Distribution (%)")
-        st.line_chart(df_filtered["available_weight_pct"].value_counts().sort_index(), color="#3fb950")
-
-    st.markdown("---")
-
-    col_ch3, col_ch4 = st.columns(2)
-
-    with col_ch3:
-        st.markdown("#### Top States by Priority Investigation Works (Critical + High)")
-        high_works = df_filtered[df_filtered["risk_band"].isin(["CRITICAL", "HIGH"])]
-        if not high_works.empty:
-            state_risk_counts = high_works["state"].value_counts().head(10)
-            st.bar_chart(state_risk_counts, color="#da3633")
-        else:
-            st.info("No Critical or High risk works in current filter selection.")
-
-    with col_ch4:
-        st.markdown("#### Risk Severity across Work Categories")
-        cat_risk = df_filtered.groupby("category")["risk_score"].mean().sort_values(ascending=False).head(10)
-        st.bar_chart(cat_risk, color="#d29922")
+    st.markdown("""
+    <div style="background-color: rgba(16, 185, 129, 0.08); border-left: 3px solid #10b981; padding: 10px 14px; border-radius: 0 4px 4px 0; margin-top: 20px; font-size: 0.8rem; color: #c9d1d9;">
+        🔒 <strong>Data Privacy & Local Execution Guarantee:</strong> All dataset validation, feature extraction, and evidence fusion operations execute strictly within local session memory. Uploaded files are never transmitted to external APIs or third-party servers, and are automatically purged when your session terminates.
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # =============================================================================
-# TAB 5: DATA QUALITY, METHODOLOGY & PROVENANCE
+# F. METHODOLOGY & PROVENANCE
 # =============================================================================
 
 with tab_meta:
-    st.markdown("### ℹ️ Methodology, Data Quality & Architecture")
+    st.markdown("### ℹ️ MPPrisma Platform Architecture & Methodology")
+
+    # Visual Architecture Flow Diagram
+    st.markdown("""
+    <div class="investigation-card">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #58a6ff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
+            End-to-End Architectural Data Flow
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #58a6ff; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #58a6ff; font-weight: 700; text-transform: uppercase;">1. Source Data</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">MoSPI Pre-Login APIs</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">18th Lok Sabha official public dumps.</div>
+            </div>
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #3fb950; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #3fb950; font-weight: 700; text-transform: uppercase;">2. Canonicalization</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">Exact Primary Joins</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">106,261 works, 99.6% join via DTL_ID.</div>
+            </div>
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #d29922; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #d29922; font-weight: 700; text-transform: uppercase;">3. Core Engines</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">Four Detectors</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">Peer (30%), Stat (25%), Mismatch (30%), Dup (15%).</div>
+            </div>
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #db6d28; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #db6d28; font-weight: 700; text-transform: uppercase;">4. Evidence Fusion</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">Normalized Math</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">Dynamic reweighting across available detectors.</div>
+            </div>
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #da3633; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #da3633; font-weight: 700; text-transform: uppercase;">5. Risk Profiling</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">Standardized Bands</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">LOW, MEDIUM, HIGH, CRITICAL.</div>
+            </div>
+            <div style="background: #0d1117; border: 1px solid #21262d; border-top: 3px solid #a371f7; border-radius: 6px; padding: 12px;">
+                <div style="font-size: 0.72rem; color: #a371f7; font-weight: 700; text-transform: uppercase;">6. Investigation</div>
+                <div style="color: #f0f6fc; font-weight: 600; font-size: 0.88rem; margin: 3px 0;">Actionable Dossiers</div>
+                <div style="font-size: 0.76rem; color: #8b949e;">Desk audit & field inspection protocols.</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("""
     <div class="investigation-card">
         <h4 style="color: #58a6ff; margin-top: 0;">Authoritative Source Provenance</h4>
         <p style="color: #c9d1d9; font-size: 0.9rem; line-height: 1.5;">
-            All intelligence and evaluation outputs are produced strictly from authentic Government of India 
+            All intelligence, risk scores, and evaluation outputs in <strong>MPPrisma</strong> are produced strictly from authentic Government of India 
             Ministry of Statistics and Programme Implementation (MoSPI) MPLADS pre-login API responses for the <strong>18th Lok Sabha</strong>.
         </p>
         <table style="width: 100%; font-size: 0.85rem; color: #c9d1d9; border-collapse: collapse; margin-top: 10px;">
@@ -832,5 +1289,21 @@ with tab_meta:
                 </p>
             </div>
         </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="investigation-card">
+        <h4 style="color: #58a6ff; margin-top: 0;">Availability-Normalized Evidence Fusion Mathematics</h4>
+        <p style="color: #c9d1d9; font-size: 0.88rem; line-height: 1.5;">
+            Missing modules are never assumed to be zero risk. The composite risk score dynamically normalizes across active detectors:
+        </p>
+        <div style="background-color: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px; margin: 10px 0; font-family: monospace; font-size: 0.88rem; color: #79c0ff;">
+            Risk Score = Σ(w_m · S_m) / Σ_{m ∈ Available} w_m<br>
+            Coverage % = (Σ_{m ∈ Available} w_m) × 100%
+        </div>
+        <p style="color: #8b949e; font-size: 0.82rem; line-height: 1.4;">
+            This prevents artificial score depression in early-stage projects where expenditure or completion records have not yet been generated.
+        </p>
     </div>
     """, unsafe_allow_html=True)
