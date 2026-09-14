@@ -1320,7 +1320,7 @@ def render_compliance_audit_html(compliance_result: Dict[str, Any]) -> str:
         detail = item.get("detail", "")
         evidence = item.get("field_evidence", "")
 
-        rows_html.append(f"""
+        rows_html.append(clean_html(f"""
         <div style="background: rgba(22, 27, 34, 0.6); border: 1px solid #30363d; border-radius: 6px; padding: 12px 14px; margin-bottom: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <span style="font-size: 0.88rem; font-weight: 700; color: #f0f6fc;">{title}</span>
@@ -1331,9 +1331,9 @@ def render_compliance_audit_html(compliance_result: Dict[str, Any]) -> str:
                 <strong>Evidence:</strong> {evidence}
             </div>
         </div>
-        """)
+        """))
 
-    content = "".join(rows_html)
+    content = "\n".join(rows_html)
 
     html = f"""
     <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
@@ -1352,7 +1352,7 @@ def render_compliance_audit_html(compliance_result: Dict[str, Any]) -> str:
         {content}
     </div>
     """
-    return textwrap.dedent(html)
+    return clean_html(html)
 
 
 def render_what_should_be_checked_next_html(directives: List[Dict[str, str]]) -> str:
@@ -1374,7 +1374,7 @@ def render_what_should_be_checked_next_html(directives: List[Dict[str, str]]) ->
         rat = d.get("rationale", "")
         bg, border, text, label = prio_styles.get(prio, prio_styles["MEDIUM"])
 
-        cards_html.append(f"""
+        cards_html.append(clean_html(f"""
         <div style="background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-left: 4px solid {border}; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <span style="font-size: 0.84rem; font-weight: 700; color: #58a6ff;">{idx}. {cat}</span>
@@ -1387,9 +1387,9 @@ def render_what_should_be_checked_next_html(directives: List[Dict[str, str]]) ->
                 <strong>Evidence Basis:</strong> {rat}
             </div>
         </div>
-        """)
+        """))
 
-    content = "".join(cards_html)
+    content = "\n".join(cards_html)
     html = f"""
     <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
         <div style="border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 14px;">
@@ -1400,7 +1400,7 @@ def render_what_should_be_checked_next_html(directives: List[Dict[str, str]]) ->
         {content}
     </div>
     """
-    return textwrap.dedent(html)
+    return clean_html(html)
 
 
 def generate_inspection_dossier_html(

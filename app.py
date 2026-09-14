@@ -446,7 +446,7 @@ with tab_cmd:
             for a_idx, (_, a_row) in enumerate(df_ag_works.iterrows()):
                 with ag_work_cols[a_idx]:
                     a_dtl = int(float(a_row["work_recommendation_dtl_id"])) if pd.notna(a_row["work_recommendation_dtl_id"]) else 0
-                    st.markdown(f"""
+                    st.markdown(clean_html(f"""
                     <div style="background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-size: 0.78rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                             <strong>DTL_{a_dtl}</strong>
@@ -455,7 +455,7 @@ with tab_cmd:
                         <div style="color: #8b949e; margin-bottom: 4px; overflow: hidden; height: 32px;">{str(a_row.get('work_description') or '')[:55]}...</div>
                         <div style="color: #58a6ff;">Cost: {format_inr(a_row.get('amount_sanctioned'))}</div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
                     if st.button("Inspect", key=f"ag_insp_{a_dtl}_{a_idx}"):
                         st.session_state["selected_dtl_id"] = a_dtl
                         st.success(f"Selected DTL {a_dtl}. Switch to '🔍 Investigation' tab.")
@@ -469,7 +469,7 @@ with tab_cmd:
     col_next_1, col_next_2, col_next_3 = st.columns(3)
     with col_next_1:
         low_cov_count = int((df_filtered["available_weight_pct"] < 60.0).sum())
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">EVIDENCE DEFICIT HOTSPOT</div>
@@ -478,11 +478,11 @@ with tab_cmd:
             </div>
             <div style="font-size: 0.72rem; color: #cbd5e1;">Action: Desk audit for missing sanction & disbursement vouchers.</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     with col_next_2:
         mismatch_active_count = int((df_filtered["mismatch_score"].notna() & (df_filtered["mismatch_score"] >= 50.0)).sum())
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #ef4444; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700; text-transform: uppercase;">FINANCIAL–EXECUTION SIGNALS</div>
@@ -491,10 +491,10 @@ with tab_cmd:
             </div>
             <div style="font-size: 0.72rem; color: #cbd5e1;">Action: Reconcile expenditure vouchers and execution delay records.</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     with col_next_3:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #38bdf8; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">SEMANTIC OVERLAP CASES</div>
@@ -503,7 +503,7 @@ with tab_cmd:
             </div>
             <div style="font-size: 0.70rem; color: #64748b; font-style: italic;">Note: Corpus-wide semantic evaluation is not currently precomputed for all works.</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     # 6. PORTFOLIO PROGRESSIVE DRILL-DOWN
     st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
@@ -514,53 +514,53 @@ with tab_cmd:
     drill_cols = st.columns(4)
     # Stage 1: National Portfolio
     with drill_cols[0]:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
             <div style="color: #38bdf8; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 1: NATIONAL PORTFOLIO</div>
             <div style="font-size: 1.1rem; font-weight: 800; color: #f8fafc; margin: 2px 0;">{len(df_portfolio):,} Works</div>
             <div style="color: #94a3b8; font-size: 0.74rem;">Avg Risk: <strong style="color: #f8fafc;">{df_portfolio['risk_score'].mean():.1f}</strong> | High/Crit: <strong style="color: #ef4444;">{(df_portfolio['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
             <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Sanctioned: {format_inr(df_portfolio['amount_sanctioned'].sum())}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     # Stage 2: State Level
     with drill_cols[1]:
         st_state_label = sel_state if sel_state != "All States" else "All States (36 States/UTs)"
         st_state_df = df_portfolio[df_portfolio["state"] == sel_state] if sel_state != "All States" else df_portfolio
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_state != 'All States' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
             <div style="color: {'#38bdf8' if sel_state != 'All States' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 2: STATE SCOPE</div>
             <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{st_state_label}</div>
             <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(st_state_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(st_state_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
             <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {st_state_df['risk_score'].mean():.1f} | Cov: {st_state_df['available_weight_pct'].mean():.0f}%</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     # Stage 3: Constituency / District Level
     with drill_cols[2]:
         c_label = sel_constituency if sel_constituency != "All Constituencies" else "All Constituencies"
         c_df = st_state_df[st_state_df["constituency"] == sel_constituency] if sel_constituency != "All Constituencies" else st_state_df
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_constituency != 'All Constituencies' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
             <div style="color: {'#38bdf8' if sel_constituency != 'All Constituencies' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 3: CONSTITUENCY</div>
             <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{c_label}</div>
             <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(c_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(c_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
             <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {c_df['risk_score'].mean():.1f} | Cov: {c_df['available_weight_pct'].mean():.0f}%</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     # Stage 4: Category Level
     with drill_cols[3]:
         cat_label = sel_category if sel_category != "All Categories" else "All Categories"
         cat_df = c_df[c_df["category"] == sel_category] if sel_category != "All Categories" else c_df
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_category != 'All Categories' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
             <div style="color: {'#38bdf8' if sel_category != 'All Categories' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 4: CATEGORY</div>
             <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{cat_label}</div>
             <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(cat_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(cat_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
             <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {cat_df['risk_score'].mean():.1f} | Cov: {cat_df['available_weight_pct'].mean():.0f}%</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
 
 # =============================================================================
@@ -802,7 +802,7 @@ with tab_investigate:
         with st.expander("▾ View Peer Benchmark Evidence (Cohort & Distribution)"):
             p_score = work_risk.module_scores.get("peer_benchmarking")
             p_badge = get_risk_badge_html('PEER', p_score) if p_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
+            st.markdown(clean_html(f"""
             <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="color: #f0f6fc; font-size: 0.95rem;">Peer Benchmarking Engine (Locked Base Weight: 30%)</strong>
@@ -820,13 +820,13 @@ with tab_investigate:
                     <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(p_res.get('reason_codes', []))}</code></div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
 
         # Expander 2: Statistical Outliers
         with st.expander("▾ View Statistical Outlier Evidence (Modified Z-Score Features)"):
             s_score = work_risk.module_scores.get("statistical_outliers")
             s_badge = get_risk_badge_html('STAT', s_score) if s_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
-            st.markdown(f"""
+            st.markdown(clean_html(f"""
             <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="color: #f0f6fc; font-size: 0.95rem;">Statistical Outlier Engine (Locked Base Weight: 25%)</strong>
@@ -842,14 +842,14 @@ with tab_investigate:
                     <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(s_res.get('reason_codes', []))}</code></div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
 
         # Expander 3: Financial-Execution Mismatch
         with st.expander("▾ View Financial–Execution Mismatch Evidence"):
             m_score = work_risk.module_scores.get("financial_execution_mismatch")
             m_badge = get_risk_badge_html('MISMATCH', m_score) if m_score is not None else '<span style="color: #8b949e;">UNAVAILABLE</span>'
             m_conf = m_res.get("confidence_label", "Level 1 (LOW)")
-            st.markdown(f"""
+            st.markdown(clean_html(f"""
             <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="color: #f0f6fc; font-size: 0.95rem;">Financial–Execution Mismatch Engine (Locked Base Weight: 30%)</strong>
@@ -865,7 +865,7 @@ with tab_investigate:
                     <div>Reason Codes: <code style="color: #79c0ff;">{', '.join(m_res.get('reason_codes', []))}</code></div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """), unsafe_allow_html=True)
 
         # Expander 4: Duplicate & Overlap Candidate Evidence
         with st.expander("▾ View Contextual Duplicate / Overlap Evidence"):
