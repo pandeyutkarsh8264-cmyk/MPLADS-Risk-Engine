@@ -371,6 +371,7 @@ with tab_cmd:
 
 with tab_queue:
     st.markdown("### 📋 Ranked Portfolio Risk Queue")
+    st.markdown("Prioritized worklist — start with projects requiring the most attention.")
     st.markdown("Sortable register of evaluated projects prioritized by composite risk score.")
 
     col_sort_l, col_sort_m, col_sort_r = st.columns([2, 2, 2])
@@ -675,6 +676,7 @@ with tab_investigate:
 
 with tab_compare:
     st.markdown("### ⚖️ Project Overlap & Contextual Duplicate Comparison")
+    st.markdown("Review potentially similar works and compare their evidence.")
     st.markdown("Deep contextual semantic comparison and implementing agency overlap audit.")
 
     # Selection for comparison
