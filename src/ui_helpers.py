@@ -16,6 +16,9 @@ import pandas as pd
 import datetime
 import textwrap
 
+from src.rules import evaluate_work_compliance
+from src.investigation import generate_deterministic_next_checks
+
 # Semantic risk color palette
 RISK_COLORS = {
     "LOW": "#238636",       # Muted green
@@ -1295,6 +1298,111 @@ CUSTOM_CSS = """
 """
 
 
+def render_compliance_audit_html(compliance_result: Dict[str, Any]) -> str:
+    """Renders the Compliance Hub evaluation matrix in the dark theme UI."""
+    overall = compliance_result.get("overall_status", "UNAVAILABLE")
+    items = compliance_result.get("items", [])
+
+    badge_styles = {
+        "PASS": ("#052e16", "#15803d", "#4ade80", "PASS"),
+        "WARNING": ("#422006", "#b45309", "#fde047", "WARNING"),
+        "NON-CONFORMING": ("#450a0a", "#b91c1c", "#f87171", "NON-CONFORMING"),
+        "UNAVAILABLE": ("#1e293b", "#475569", "#94a3b8", "UNAVAILABLE")
+    }
+
+    ov_bg, ov_border, ov_text, ov_label = badge_styles.get(overall, badge_styles["UNAVAILABLE"])
+
+    rows_html = []
+    for item in items:
+        st = item.get("status", "UNAVAILABLE")
+        bg, border, text, label = badge_styles.get(st, badge_styles["UNAVAILABLE"])
+        title = item.get("title", "Check")
+        detail = item.get("detail", "")
+        evidence = item.get("field_evidence", "")
+
+        rows_html.append(f"""
+        <div style="background: rgba(22, 27, 34, 0.6); border: 1px solid #30363d; border-radius: 6px; padding: 12px 14px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.88rem; font-weight: 700; color: #f0f6fc;">{title}</span>
+                <span style="background: {bg}; border: 1px solid {border}; color: {text}; padding: 2px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;">{label}</span>
+            </div>
+            <div style="font-size: 0.82rem; color: #c9d1d9; margin-bottom: 4px; line-height: 1.4;">{detail}</div>
+            <div style="font-size: 0.75rem; color: #8b949e; font-family: monospace; background: rgba(13, 17, 23, 0.5); padding: 4px 8px; border-radius: 4px;">
+                <strong>Evidence:</strong> {evidence}
+            </div>
+        </div>
+        """)
+
+    content = "".join(rows_html)
+
+    html = f"""
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; padding-bottom: 12px; margin-bottom: 14px;">
+            <div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: #58a6ff; text-transform: uppercase; letter-spacing: 0.8px;">COMPLIANCE INTELLIGENCE</span>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #f0f6fc; margin-top: 2px;">Administrative & Milestone Compliance Conformance</div>
+                <div style="font-size: 0.78rem; color: #8b949e;">Independent audit checks based strictly on verifiable MoSPI record fields (conceptually separate from analytical risk score).</div>
+            </div>
+            <div style="text-align: right;">
+                <span style="background: {ov_bg}; border: 1px solid {ov_border}; color: {ov_text}; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.8px;">
+                    {ov_label}
+                </span>
+            </div>
+        </div>
+        {content}
+    </div>
+    """
+    return textwrap.dedent(html)
+
+
+def render_what_should_be_checked_next_html(directives: List[Dict[str, str]]) -> str:
+    """Renders deterministic, evidence-driven investigator directives."""
+    if not directives:
+        return ""
+
+    cards_html = []
+    prio_styles = {
+        "HIGH": ("#450a0a", "#b91c1c", "#f87171", "HIGH PRIORITY"),
+        "MEDIUM": ("#422006", "#b45309", "#fde047", "MEDIUM PRIORITY"),
+        "LOW": ("#052e16", "#15803d", "#4ade80", "STANDARD")
+    }
+
+    for idx, d in enumerate(directives, 1):
+        cat = d.get("category", "Audit Check")
+        prio = d.get("priority", "MEDIUM")
+        act = d.get("action", "")
+        rat = d.get("rationale", "")
+        bg, border, text, label = prio_styles.get(prio, prio_styles["MEDIUM"])
+
+        cards_html.append(f"""
+        <div style="background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-left: 4px solid {border}; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: #58a6ff;">{idx}. {cat}</span>
+                <span style="background: {bg}; border: 1px solid {border}; color: {text}; padding: 1px 7px; border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">{label}</span>
+            </div>
+            <div style="font-size: 0.92rem; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; line-height: 1.4;">
+                👉 {act}
+            </div>
+            <div style="font-size: 0.78rem; color: #8b949e;">
+                <strong>Evidence Basis:</strong> {rat}
+            </div>
+        </div>
+        """)
+
+    content = "".join(cards_html)
+    html = f"""
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+        <div style="border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 14px;">
+            <span style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px;">DETERMINISTIC INVESTIGATOR PROTOCOL</span>
+            <div style="font-size: 1.05rem; font-weight: 700; color: #f0f6fc; margin-top: 2px;">What Should Be Checked Next?</div>
+            <div style="font-size: 0.78rem; color: #8b949e;">Concrete next-step actions formulated strictly from currently observed evidence and missing milestone indicators.</div>
+        </div>
+        {content}
+    </div>
+    """
+    return textwrap.dedent(html)
+
+
 def generate_inspection_dossier_html(
     work_risk: Any,
     work_record: Dict[str, Any],
@@ -1318,6 +1426,7 @@ def generate_inspection_dossier_html(
     category = work_record.get("category") or "Unavailable"
     stage = work_record.get("work_stage") or "Unavailable"
     desc = work_record.get("work_description") or "Unavailable"
+    impl_auth = work_record.get("implementing_authority") or work_record.get("ida_name_raw") or "Unavailable"
 
     def fmt_curr(val):
         if val is None or pd.isna(val):
@@ -1388,6 +1497,31 @@ def generate_inspection_dossier_html(
 
     desk_checklist_html = "".join([f"<li style='margin-bottom: 6px;'><input type='checkbox' disabled> {act}</li>" for act in desk_actions]) or "<li>No desk actions required.</li>"
     field_checklist_html = "".join([f"<li style='margin-bottom: 6px;'><input type='checkbox' disabled> {act}</li>" for act in field_actions]) or "<li>No field actions required.</li>"
+
+    # Compliance Hub matrix rows
+    comp_res = evaluate_work_compliance(work_record)
+    comp_rows = []
+    for it in comp_res.get("items", []):
+        c_status = it.get("status", "UNAVAILABLE")
+        c_color = {"PASS": "#16a34a", "WARNING": "#d97706", "NON-CONFORMING": "#dc2626", "UNAVAILABLE": "#64748b"}.get(c_status, "#64748b")
+        comp_rows.append(
+            f"<tr><td><strong>{it.get('title')}</strong></td>"
+            f"<td><span style='color: {c_color}; font-weight: 700;'>{c_status}</span></td>"
+            f"<td>{it.get('detail')}<br><span style='font-size: 0.76rem; color: #64748b;'>Evidence: {it.get('field_evidence')}</span></td></tr>"
+        )
+    compliance_rows_html = "".join(comp_rows)
+
+    # Deterministic Next Checks
+    next_checks = generate_deterministic_next_checks(work_risk, work_record, p_res, s_res, m_res, d_res)
+    next_checks_items = []
+    for nc in next_checks:
+        p_color = {"HIGH": "#dc2626", "MEDIUM": "#d97706", "LOW": "#16a34a"}.get(nc.get("priority"), "#2563eb")
+        next_checks_items.append(
+            f"<div style='margin-bottom: 8px; font-size: 0.84rem;'>"
+            f"<strong style='color: {p_color};'>[{nc.get('priority')} PRIORITY] {nc.get('category')}:</strong> {nc.get('action')}<br>"
+            f"<span style='font-size: 0.78rem; color: #64748b;'>Basis: {nc.get('rationale')}</span></div>"
+        )
+    next_checks_html = "".join(next_checks_items) or "<div>Standard monitoring routine.</div>"
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1636,8 +1770,8 @@ def generate_inspection_dossier_html(
     <tr>
       <th>Current Work Stage</th>
       <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{stage}</span></td>
-      <th>Review Status</th>
-      <td><strong>{review_status}</strong></td>
+      <th>Implementing Authority</th>
+      <td><strong>{impl_auth}</strong></td>
     </tr>
     <tr>
       <th>Recorded Description</th>
@@ -1699,7 +1833,26 @@ def generate_inspection_dossier_html(
     </tbody>
   </table>
 
-  <div class="section-title">4. Action Protocols & Field Verification Checklist</div>
+  <div class="section-title">4. Compliance Hub Audit Matrix (MoSPI Records)</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 28%;">Compliance Check</th>
+        <th style="width: 14%;">Audit Status</th>
+        <th style="width: 58%;">Conformance Finding & Source Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {compliance_rows_html}
+    </tbody>
+  </table>
+
+  <div class="section-title">5. Deterministic Investigator Directives ("What Should Be Checked Next?")</div>
+  <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px;">
+    {next_checks_html}
+  </div>
+
+  <div class="section-title">6. Action Protocols & Field Verification Checklist</div>
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;">
       <div style="font-weight: 700; font-size: 0.84rem; color: #0284c7; text-transform: uppercase; margin-bottom: 8px;">
@@ -1719,13 +1872,16 @@ def generate_inspection_dossier_html(
     </div>
   </div>
 
-  <div class="section-title">5. Investigator Review Status & Observational Notes</div>
+  <div class="section-title">7. Investigator Review Status & Observational Notes</div>
   <div style="display: flex; gap: 16px; margin-bottom: 10px;">
     <div><strong>Assigned Review Status:</strong> <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-weight: 700;">{review_status}</span></div>
   </div>
   <div class="notes-box">
     <strong>Auditor Notes:</strong><br>
     {clean_notes}
+  </div>
+  <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px; font-style: italic;">
+    Notice: Review status and notes are session-scoped and are not written back to source data.
   </div>
 
   <div class="sign-grid">

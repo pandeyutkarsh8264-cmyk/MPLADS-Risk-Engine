@@ -45,8 +45,12 @@ from src.ui_helpers import (
     render_risk_drivers_html,
     render_duplicate_comparison_html,
     generate_inspection_dossier_html,
+    render_compliance_audit_html,
+    render_what_should_be_checked_next_html,
     RISK_COLORS
 )
+from src.rules import evaluate_work_compliance
+from src.investigation import generate_deterministic_next_checks
 from src.peer_benchmark import PeerBenchmarkEngine
 from src.statistical_outliers import StatisticalOutlierEngine
 from src.mismatch import FinancialExecutionMismatchEngine
@@ -71,14 +75,20 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 @st.cache_data(show_spinner=False)
 def load_scored_portfolio() -> pd.DataFrame:
-    """Loads the pre-scored 18th Lok Sabha portfolio summary."""
+    """Loads the pre-scored 18th Lok Sabha portfolio summary and joins implementing authority."""
     p_path = ROOT_DIR / "data" / "processed" / "scored_work_summary.parquet"
     if p_path.exists():
         df = pd.read_parquet(p_path)
+        master_path = ROOT_DIR / "data" / "processed" / "canonical_work_master.parquet"
+        if master_path.exists():
+            master_cols = pd.read_parquet(master_path, columns=["work_recommendation_dtl_id", "implementing_authority"])
+            df = pd.merge(df, master_cols, on="work_recommendation_dtl_id", how="left")
+            df["implementing_authority"] = df["implementing_authority"].fillna("UNSPECIFIED")
+        else:
+            df["implementing_authority"] = "UNSPECIFIED"
     else:
         # Fallback to sample outputs
         sample_path = ROOT_DIR / "artifacts" / "demo_outputs" / "sample_final_work_risk_outputs.json"
-        import json
         with open(sample_path, "r", encoding="utf-8") as f:
             samples = json.load(f)
         rows = []
@@ -109,10 +119,35 @@ def load_scored_portfolio() -> pd.DataFrame:
                 "observed_vs_proxy": s.get("evidence_coverage", {}).get("observed_vs_proxy", "fully_observed"),
                 "has_completion_evidence": meta.get("is_completed", False),
                 "has_expenditure_evidence": meta.get("total_disbursed_amount") is not None,
-                "investigation_required": s.get("risk_band") in ("CRITICAL", "HIGH")
+                "investigation_required": s.get("risk_band") in ("CRITICAL", "HIGH"),
+                "implementing_authority": meta.get("implementing_authority", "UNSPECIFIED")
             })
         df = pd.DataFrame(rows)
     return df
+
+
+@st.cache_data(show_spinner=False)
+def compute_agency_concentration_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Computes deterministic concentration metrics by implementing authority."""
+    if df.empty or "implementing_authority" not in df.columns:
+        return pd.DataFrame()
+    
+    df_calc = df.copy()
+    df_calc["is_high_critical"] = df_calc["risk_band"].isin(["HIGH", "CRITICAL"]).astype(int)
+    
+    grouped = df_calc.groupby("implementing_authority").agg(
+        total_works=("work_recommendation_dtl_id", "count"),
+        total_sanctioned=("amount_sanctioned", "sum"),
+        avg_risk_score=("risk_score", "mean"),
+        high_critical_count=("is_high_critical", "sum"),
+        avg_coverage=("available_weight_pct", "mean"),
+        primary_state=("state", "first"),
+        primary_district=("district", "first")
+    ).reset_index()
+    
+    grouped["high_critical_pct"] = (grouped["high_critical_count"] / grouped["total_works"]) * 100.0
+    grouped = grouped.sort_values(by="total_works", ascending=False)
+    return grouped
 
 
 @st.cache_data(show_spinner=False)
@@ -367,6 +402,166 @@ with tab_cmd:
                     st.session_state["selected_dtl_id"] = dtl_disp
                     st.success(f"Selected DTL {dtl_disp}. Navigate to '🔍 Investigation' tab to view dossier.")
 
+    # 4. IMPLEMENTING ENTITY CONCENTRATION INTELLIGENCE
+    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+    st.markdown("#### 🏛️ Implementing Entity Concentration Intelligence")
+    st.markdown("<div style='font-size: 0.86rem; color: #94a3b8; margin-top: -6px; margin-bottom: 12px;'>"
+                "<strong>Concentration pattern requiring review:</strong> Analyzes work density and risk distribution across genuine implementing authorities recorded in the master corpus. Concentration itself is not misconduct.</div>", unsafe_allow_html=True)
+
+    df_agency = compute_agency_concentration_df(df_filtered)
+    if not df_agency.empty:
+        # Display top 5 concentrated entities
+        top_agencies = df_agency.head(5)
+        top_ag_display = []
+        for _, ag_row in top_agencies.iterrows():
+            top_ag_display.append({
+                "Implementing Authority": ag_row["implementing_authority"],
+                "Total Works": f"{int(ag_row['total_works']):,}",
+                "Sanctioned (₹)": format_inr(ag_row["total_sanctioned"]),
+                "Avg Risk Score": f"{float(ag_row['avg_risk_score']):.2f}",
+                "High / Critical": f"{int(ag_row['high_critical_count']):,} ({ag_row['high_critical_pct']:.1f}%)",
+                "Avg Coverage": f"{float(ag_row['avg_coverage']):.0f}%",
+                "Primary Location": f"{ag_row['primary_district']}, {ag_row['primary_state']}"
+            })
+        st.dataframe(pd.DataFrame(top_ag_display), use_container_width=True, hide_index=True)
+
+        # Agency Drill-Down Selector
+        col_ag_l, col_ag_r = st.columns([3, 1])
+        with col_ag_l:
+            ag_opts = df_agency["implementing_authority"].tolist()[:50]
+            sel_agency = st.selectbox("Select an implementing authority for portfolio drill-down:", ag_opts, index=0)
+        with col_ag_r:
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            filter_ag_btn = st.button("Filter Queue to this Entity", key="btn_filter_agency")
+
+        if filter_ag_btn:
+            st.session_state["search_override"] = sel_agency
+            st.success(f"Filter applied for entity: {sel_agency}. Switch to '📋 Risk Queue' to inspect matching works.")
+
+        # Show works for selected agency ranked by risk score
+        df_ag_works = df_filtered[df_filtered["implementing_authority"] == sel_agency].sort_values(by="risk_score", ascending=False).head(5)
+        if not df_ag_works.empty:
+            st.markdown(f"<div style='font-size: 0.82rem; color: #38bdf8; font-weight: 600; margin-top: 6px;'>Top High-Risk Works for {sel_agency}:</div>", unsafe_allow_html=True)
+            ag_work_cols = st.columns(len(df_ag_works))
+            for a_idx, (_, a_row) in enumerate(df_ag_works.iterrows()):
+                with ag_work_cols[a_idx]:
+                    a_dtl = int(float(a_row["work_recommendation_dtl_id"])) if pd.notna(a_row["work_recommendation_dtl_id"]) else 0
+                    st.markdown(f"""
+                    <div style="background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-size: 0.78rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <strong>DTL_{a_dtl}</strong>
+                            {get_risk_badge_html(a_row.get('risk_band'), a_row.get('risk_score'))}
+                        </div>
+                        <div style="color: #8b949e; margin-bottom: 4px; overflow: hidden; height: 32px;">{str(a_row.get('work_description') or '')[:55]}...</div>
+                        <div style="color: #58a6ff;">Cost: {format_inr(a_row.get('amount_sanctioned'))}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("Inspect", key=f"ag_insp_{a_dtl}_{a_idx}"):
+                        st.session_state["selected_dtl_id"] = a_dtl
+                        st.success(f"Selected DTL {a_dtl}. Switch to '🔍 Investigation' tab.")
+
+    # 5. WHERE TO LOOK NEXT — PRIORITY HOTSPOTS
+    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+    st.markdown("#### 🎯 Where To Look Next — Priority Anomaly Hotspots")
+    st.markdown("<div style='font-size: 0.86rem; color: #94a3b8; margin-top: -6px; margin-bottom: 12px;'>"
+                "Empirical priority clusters derived strictly from current analytical calculations across the 18th Lok Sabha corpus.</div>", unsafe_allow_html=True)
+
+    col_next_1, col_next_2, col_next_3 = st.columns(3)
+    with col_next_1:
+        low_cov_count = int((df_filtered["available_weight_pct"] < 60.0).sum())
+        st.markdown(f"""
+        <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">EVIDENCE DEFICIT HOTSPOT</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">{low_cov_count:,} Works</div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">Works with &lt;60% evidence coverage requiring urgent document requisition before concluding review.</div>
+            </div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">Action: Desk audit for missing sanction & disbursement vouchers.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_next_2:
+        mismatch_active_count = int((df_filtered["mismatch_score"].notna() & (df_filtered["mismatch_score"] >= 50.0)).sum())
+        st.markdown(f"""
+        <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #ef4444; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700; text-transform: uppercase;">FINANCIAL–EXECUTION SIGNALS</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">{mismatch_active_count:,} Elevated Mismatches</div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">Works exhibiting severe milestone divergence, stalled execution, or disbursement variances.</div>
+            </div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">Action: Reconcile expenditure vouchers and execution delay records.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_next_3:
+        st.markdown(f"""
+        <div style="background-color: #111827; border: 1px solid #1e293b; border-left: 4px solid #38bdf8; border-radius: 6px; padding: 14px; height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">SEMANTIC OVERLAP CASES</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">3 Surfaced Cases</div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">3 high-confidence semantic overlap cases currently surfaced from the evaluated overlap set under the current similarity + contextual matching criteria.</div>
+            </div>
+            <div style="font-size: 0.70rem; color: #64748b; font-style: italic;">Note: Corpus-wide semantic evaluation is not currently precomputed for all works.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 6. PORTFOLIO PROGRESSIVE DRILL-DOWN
+    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+    st.markdown("#### 🧭 Progressive Portfolio Drill-Down")
+    st.markdown("<div style='font-size: 0.86rem; color: #94a3b8; margin-top: -6px; margin-bottom: 12px;'>"
+                "Progressively narrow scope: <code>Portfolio</code> → <code>State</code> → <code>Constituency / District</code> → <code>Category</code> → <code>Project</code>.</div>", unsafe_allow_html=True)
+
+    drill_cols = st.columns(4)
+    # Stage 1: National Portfolio
+    with drill_cols[0]:
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
+            <div style="color: #38bdf8; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 1: NATIONAL PORTFOLIO</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #f8fafc; margin: 2px 0;">{len(df_portfolio):,} Works</div>
+            <div style="color: #94a3b8; font-size: 0.74rem;">Avg Risk: <strong style="color: #f8fafc;">{df_portfolio['risk_score'].mean():.1f}</strong> | High/Crit: <strong style="color: #ef4444;">{(df_portfolio['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
+            <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Sanctioned: {format_inr(df_portfolio['amount_sanctioned'].sum())}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Stage 2: State Level
+    with drill_cols[1]:
+        st_state_label = sel_state if sel_state != "All States" else "All States (36 States/UTs)"
+        st_state_df = df_portfolio[df_portfolio["state"] == sel_state] if sel_state != "All States" else df_portfolio
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_state != 'All States' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
+            <div style="color: {'#38bdf8' if sel_state != 'All States' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 2: STATE SCOPE</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{st_state_label}</div>
+            <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(st_state_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(st_state_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
+            <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {st_state_df['risk_score'].mean():.1f} | Cov: {st_state_df['available_weight_pct'].mean():.0f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Stage 3: Constituency / District Level
+    with drill_cols[2]:
+        c_label = sel_constituency if sel_constituency != "All Constituencies" else "All Constituencies"
+        c_df = st_state_df[st_state_df["constituency"] == sel_constituency] if sel_constituency != "All Constituencies" else st_state_df
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_constituency != 'All Constituencies' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
+            <div style="color: {'#38bdf8' if sel_constituency != 'All Constituencies' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 3: CONSTITUENCY</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{c_label}</div>
+            <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(c_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(c_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
+            <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {c_df['risk_score'].mean():.1f} | Cov: {c_df['available_weight_pct'].mean():.0f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Stage 4: Category Level
+    with drill_cols[3]:
+        cat_label = sel_category if sel_category != "All Categories" else "All Categories"
+        cat_df = c_df[c_df["category"] == sel_category] if sel_category != "All Categories" else c_df
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid {'#38bdf8' if sel_category != 'All Categories' else '#334155'}; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem;">
+            <div style="color: {'#38bdf8' if sel_category != 'All Categories' else '#94a3b8'}; font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">LEVEL 4: CATEGORY</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{cat_label}</div>
+            <div style="color: #94a3b8; font-size: 0.74rem;">Works: <strong style="color: #f8fafc;">{len(cat_df):,}</strong> | High/Crit: <strong style="color: #ef4444;">{(cat_df['risk_band'].isin(['HIGH', 'CRITICAL'])).sum():,}</strong></div>
+            <div style="color: #64748b; font-size: 0.72rem; margin-top: 2px;">Avg Risk: {cat_df['risk_score'].mean():.1f} | Cov: {cat_df['available_weight_pct'].mean():.0f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 # =============================================================================
 # B. RISK QUEUE
@@ -419,7 +614,11 @@ with tab_queue:
     elif selected_preset == "Financial–Execution Signals":
         df_queue = df_queue[df_queue["mismatch_score"].notna() & (df_queue["mismatch_score"] > 0)]
 
-    if selected_preset != "All Projects":
+    if selected_preset == "Semantic Overlap":
+        st.markdown(f"<div style='font-size: 0.85rem; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px;'>"
+                    f"<strong>3 high-confidence semantic overlap cases currently surfaced from the evaluated overlap set under the current similarity + contextual matching criteria.</strong><br>"
+                    f"<span style='font-size: 0.78rem; color: #94a3b8;'>Note: Corpus-wide semantic evaluation is not currently precomputed for all works.</span></div>", unsafe_allow_html=True)
+    elif selected_preset != "All Projects":
         st.markdown(f"<div style='font-size: 0.8rem; color: #38bdf8; margin-bottom: 8px;'>Active preset: <strong>{selected_preset}</strong> ({len(df_queue):,} matching works)</div>", unsafe_allow_html=True)
 
     col_sort_l, col_sort_m, col_sort_r = st.columns([2, 2, 2])
@@ -587,10 +786,15 @@ with tab_investigate:
         st.markdown("#### ⚡ Top Risk Drivers")
         st.markdown(render_risk_drivers_html(work_risk, p_res, s_res, m_res, d_res), unsafe_allow_html=True)
 
-        # 4. HOW THE RISK SCORE WAS BUILT (Engine Contribution Math Table)
+        # 4. COMPLIANCE HUB (Administrative & Milestone Conformance)
+        st.markdown("#### 📋 Administrative & Milestone Compliance Conformance")
+        comp_result = evaluate_work_compliance(work_record)
+        st.markdown(render_compliance_audit_html(comp_result), unsafe_allow_html=True)
+
+        # 5. HOW THE RISK SCORE WAS BUILT (Engine Contribution Math Table)
         st.markdown(render_math_breakdown_html(work_risk), unsafe_allow_html=True)
 
-        # 5. SUPPORTING TECHNICAL EVIDENCE (Expandable Accordions — Collapsed by Default)
+        # 6. SUPPORTING TECHNICAL EVIDENCE (Expandable Accordions — Collapsed by Default)
         st.markdown("#### 🔬 Supporting Technical Evidence")
         st.markdown("Detailed diagnostic distributions, cohort calculations, and provenance verification:")
 
@@ -682,18 +886,14 @@ with tab_investigate:
                     })
                 st.dataframe(pd.DataFrame(dup_table), use_container_width=True, hide_index=True)
 
-        # 6. RISK JOURNEY (Authentic Milestone Progression)
-        st.markdown("#### 🛣️ Authentic Milestone Progression")
-        st.markdown(render_milestone_timeline_html(work_record), unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # 7. WHAT SHOULD BE CHECKED? (INVESTIGATION ACTIONS)
-        st.markdown("### 📋 What Should Be Checked?")
+        # 7. WHAT SHOULD BE CHECKED NEXT? (DETERMINISTIC INVESTIGATOR DIRECTIVES)
+        st.markdown("### 📋 What Should Be Checked Next?")
         st.markdown(
-            "Concrete, objective field and administrative verification checks based on the recorded anomalies. "
+            "Concrete, objective field and administrative verification checks based on currently observed evidence. "
             "Tailored for desk review auditors and field inspection teams."
         )
+        next_directives = generate_deterministic_next_checks(work_risk, work_record, p_res, s_res, m_res, d_res)
+        st.markdown(render_what_should_be_checked_next_html(next_directives), unsafe_allow_html=True)
 
         desk_actions = [a for a in work_risk.investigation_actions if any(k in a.lower() for k in ("desk", "order", "document", "estimate", "approval", "sanction", "voucher", "disbursement"))]
         field_actions = [a for a in work_risk.investigation_actions if a not in desk_actions]
@@ -717,7 +917,12 @@ with tab_investigate:
                 for act in work_risk.investigation_actions[len(work_risk.investigation_actions)//2 or 1:]:
                     st.markdown(f'<div class="action-box-field">🔍 {act}</div>', unsafe_allow_html=True)
 
-        # 8. INVESTIGATOR REVIEW STATUS, NOTES & EXPORT ACTIONS
+        # 8. RISK JOURNEY (Authentic Milestone Progression)
+        st.markdown("---")
+        st.markdown("#### 🛣️ Authentic Milestone Progression (Risk Journey)")
+        st.markdown(render_milestone_timeline_html(work_record), unsafe_allow_html=True)
+
+        # 9. INVESTIGATOR REVIEW STATUS & NOTES
         st.markdown("---")
         st.markdown("#### 📋 Investigator Review & Action Management")
         st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-top: -8px;'>Assign session-level review classification, record observational notes, and export official inspection dossiers or audit records.</p>", unsafe_allow_html=True)
@@ -750,6 +955,9 @@ with tab_investigate:
             )
             st.session_state["investigator_notes"][target_dtl_id] = new_notes
 
+        st.markdown("<div style='font-size: 0.78rem; color: #8b949e; font-style: italic; margin-top: -4px; margin-bottom: 12px;'>Notice: Review status and notes are session-scoped and are not written back to source data.</div>", unsafe_allow_html=True)
+
+        # 10. EXPORT ACTIONS (Dossier HTML + Audit Record JSON)
         col_exp_1, col_exp_2 = st.columns(2)
         with col_exp_1:
             dossier_html = generate_inspection_dossier_html(
@@ -804,6 +1012,9 @@ with tab_compare:
     st.markdown("### ⚖️ Project Overlap & Contextual Duplicate Comparison")
     st.markdown("Review potentially similar works and compare their evidence.")
     st.markdown("Deep contextual semantic comparison and implementing agency overlap audit.")
+    st.markdown("<div style='font-size: 0.85rem; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 10px 14px; margin-top: 8px; margin-bottom: 12px;'>"
+                "<strong>3 high-confidence semantic overlap cases currently surfaced from the evaluated overlap set under the current similarity + contextual matching criteria.</strong><br>"
+                "<span style='font-size: 0.78rem; color: #94a3b8;'>Note: Corpus-wide semantic evaluation is not currently precomputed for all works. Curated cases below demonstrate verified high-similarity pairs within their contextual candidate blocks.</span></div>", unsafe_allow_html=True)
 
     # Selection for comparison
     curated_overlap_options = [
