@@ -1294,3 +1294,459 @@ CUSTOM_CSS = """
 </style>
 """
 
+
+def generate_inspection_dossier_html(
+    work_risk: Any,
+    work_record: Dict[str, Any],
+    p_res: Dict[str, Any],
+    s_res: Dict[str, Any],
+    m_res: Dict[str, Any],
+    d_res: Dict[str, Any],
+    review_status: str = "Pending Review",
+    review_notes: str = ""
+) -> str:
+    """Generates an official, self-contained, print-ready HTML inspection memorandum (A4 formatted).
+    
+    Contains only authentic project and evidence fields; unavailable fields are strictly marked 'Unavailable'.
+    """
+    dtl_id = work_record.get("work_recommendation_dtl_id", "Unavailable")
+    work_id = work_record.get("work_id") or f"DTL_{dtl_id}"
+    state = work_record.get("state") or "Unavailable"
+    constituency = work_record.get("constituency") or "Unavailable"
+    district = work_record.get("district") or "Unavailable"
+    mp_name = work_record.get("mp_name") or "Unavailable"
+    category = work_record.get("category") or "Unavailable"
+    stage = work_record.get("work_stage") or "Unavailable"
+    desc = work_record.get("work_description") or "Unavailable"
+
+    def fmt_curr(val):
+        if val is None or pd.isna(val):
+            return "Unavailable"
+        return format_inr(val)
+
+    rec_cost = fmt_curr(work_record.get("amount_recommended"))
+    sanc_cost = fmt_curr(work_record.get("amount_sanctioned"))
+    comp_cost = fmt_curr(work_record.get("amount_completed"))
+    disb_cost = fmt_curr(work_record.get("total_disbursed_amount"))
+
+    raw_score = getattr(work_risk, "risk_score", None)
+    if raw_score is None:
+        raw_score = getattr(work_risk, "composite_risk_score", 0.0)
+    score = float(raw_score) if raw_score is not None else 0.0
+    risk_band = getattr(work_risk, "risk_band", "UNAVAILABLE")
+    coverage_dict = getattr(work_risk, "evidence_coverage", {})
+    if isinstance(coverage_dict, dict):
+        cov_pct = float(coverage_dict.get("available_weight_pct", 0.0))
+    else:
+        cov_pct = float(getattr(coverage_dict, "available_weight_pct", 0.0))
+
+    band_colors = {
+        "CRITICAL": "#b91c1c",
+        "HIGH": "#c2410c",
+        "MEDIUM": "#b45309",
+        "LOW": "#15803d",
+        "UNAVAILABLE": "#4b5563"
+    }
+    band_bgs = {
+        "CRITICAL": "#fef2f2",
+        "HIGH": "#fff7ed",
+        "MEDIUM": "#fffbeb",
+        "LOW": "#f0fdf4",
+        "UNAVAILABLE": "#f3f4f6"
+    }
+    theme_color = band_colors.get(risk_band, "#4b5563")
+    theme_bg = band_bgs.get(risk_band, "#f3f4f6")
+
+    # Engine scores
+    p_score = f"{p_res.get('score'):.2f}" if p_res and p_res.get("score") is not None else "Unavailable"
+    p_median = fmt_curr(p_res.get("peer_median")) if p_res and p_res.get("peer_median") is not None else "Unavailable"
+    p_pctile = f"{p_res.get('percentile_rank', 0):.0f}th percentile" if p_res and p_res.get("percentile_rank") is not None else "Unavailable"
+    p_cohort = p_res.get("cohort_label", "Unavailable") if p_res else "Unavailable"
+    p_ev = p_res.get("evidence", "Peer benchmark evaluation.") if p_res else "Unavailable"
+
+    s_score = f"{s_res.get('score'):.2f}" if s_res and s_res.get("score") is not None else "Unavailable"
+    s_ev = s_res.get("evidence", "Statistical distribution analysis.") if s_res else "Unavailable"
+
+    m_score = f"{m_res.get('score'):.2f}" if m_res and m_res.get("score") is not None else "Unavailable (No execution record)"
+    m_conf = m_res.get("confidence_label", "Unavailable") if m_res else "Unavailable"
+    m_ev = m_res.get("evidence", "Financial disbursement & timeline comparison.") if m_res else "Unavailable"
+
+    d_score = f"{d_res.get('score'):.2f}" if d_res and d_res.get("score") is not None else "Unavailable (No comparable candidates in block)"
+    d_ev = d_res.get("evidence", "Semantic and agency similarity audit.") if d_res else "Unavailable"
+
+    # Action checklist
+    actions = getattr(work_risk, "investigation_actions", [])
+    desk_actions = [a for a in actions if any(k in a.lower() for k in ("desk", "order", "document", "estimate", "approval", "sanction", "voucher", "disbursement"))]
+    field_actions = [a for a in actions if a not in desk_actions]
+    if not desk_actions and actions:
+        desk_actions = actions[:len(actions)//2 or 1]
+    if not field_actions and actions:
+        field_actions = actions[len(actions)//2 or 1:]
+
+    clean_notes = review_notes.strip() if review_notes else "No observational notes recorded for this session."
+    now_str = datetime.datetime.now().strftime("%d %B %Y, %H:%M")
+
+    desk_checklist_html = "".join([f"<li style='margin-bottom: 6px;'><input type='checkbox' disabled> {act}</li>" for act in desk_actions]) or "<li>No desk actions required.</li>"
+    field_checklist_html = "".join([f"<li style='margin-bottom: 6px;'><input type='checkbox' disabled> {act}</li>" for act in field_actions]) or "<li>No field actions required.</li>"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPPrisma Inspection Dossier — DTL {dtl_id}</title>
+<style>
+  @page {{
+    size: A4;
+    margin: 14mm 16mm;
+  }}
+  @media print {{
+    body {{
+      background: #ffffff !important;
+      color: #0f172a !important;
+      padding: 0 !important;
+    }}
+    .no-print {{
+      display: none !important;
+    }}
+    .page-container {{
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+    }}
+    .section-card {{
+      break-inside: avoid;
+    }}
+  }}
+  body {{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background-color: #f1f5f9;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }}
+  .page-container {{
+    max-width: 860px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }}
+  .header-bar {{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+  }}
+  .header-title {{
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }}
+  .header-subtitle {{
+    font-size: 0.82rem;
+    color: #475569;
+    font-weight: 600;
+    margin-top: 2px;
+  }}
+  .header-meta {{
+    text-align: right;
+    font-size: 0.78rem;
+    color: #64748b;
+  }}
+  .print-btn {{
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }}
+  .print-btn:hover {{
+    background: #0369a1;
+  }}
+  .risk-hero {{
+    background: {theme_bg};
+    border: 1px solid {theme_color};
+    border-left: 6px solid {theme_color};
+    border-radius: 6px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+  }}
+  .risk-hero-score {{
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: {theme_color};
+    line-height: 1;
+  }}
+  .risk-hero-band {{
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: {theme_color};
+    letter-spacing: 0.5px;
+  }}
+  .risk-hero-coverage {{
+    font-size: 0.82rem;
+    color: #475569;
+    font-weight: 600;
+  }}
+  .section-title {{
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+  }}
+  table.data-table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+  }}
+  table.data-table th {{
+    background: #f8fafc;
+    color: #475569;
+    text-align: left;
+    padding: 7px 10px;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+  }}
+  table.data-table td {{
+    padding: 7px 10px;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+  }}
+  .checklist {{
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.84rem;
+    color: #334155;
+  }}
+  .notes-box {{
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: #1e293b;
+    white-space: pre-wrap;
+    min-height: 50px;
+  }}
+  .sign-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid #cbd5e1;
+    font-size: 0.82rem;
+  }}
+  .sign-line {{
+    margin-top: 36px;
+    border-bottom: 1px solid #475569;
+    width: 90%;
+  }}
+  .legal-notice {{
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin-top: 24px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 10px;
+    text-align: center;
+  }}
+</style>
+</head>
+<body>
+
+<div class="no-print" style="max-width: 860px; margin: 0 auto 12px auto; display: flex; justify-content: space-between; align-items: center;">
+  <button onclick="window.print()" class="print-btn">🖨️ Print / Save as PDF</button>
+  <span style="font-size: 0.8rem; color: #64748b;">A4 Official Inspection Memorandum • MoSPI 18th Lok Sabha Corpus</span>
+</div>
+
+<div class="page-container">
+  <div class="header-bar">
+    <div>
+      <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+        Government of India • Ministry of Statistics and Programme Implementation
+      </div>
+      <div class="header-title">MPPrisma — Project Inspection Dossier</div>
+      <div class="header-subtitle">Member of Parliament Local Area Development Scheme (MPLADS)</div>
+    </div>
+    <div class="header-meta">
+      <div><strong>Case ID:</strong> DTL_{dtl_id}</div>
+      <div><strong>Generated:</strong> {now_str}</div>
+      <div><strong>Corpus:</strong> 18th Lok Sabha</div>
+    </div>
+  </div>
+
+  <div class="risk-hero">
+    <div>
+      <div class="risk-hero-band">{risk_band} RISK AUDIT TARGET</div>
+      <div class="risk-hero-coverage">
+        Evidence Coverage: <strong>{cov_pct:.0f}%</strong> (Availability-Normalized) &bull; Review Status: <strong>{review_status}</strong>
+      </div>
+    </div>
+    <div style="text-align: right;">
+      <div class="risk-hero-score">{score:.2f}</div>
+      <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">COMPOSITE RISK INDEX / 100</div>
+    </div>
+  </div>
+
+  <div class="section-title">1. Project Identity & Administrative Provenance</div>
+  <table class="data-table">
+    <tr>
+      <th style="width: 20%;">Recommendation DTL ID</th>
+      <td style="width: 30%;"><strong>{dtl_id}</strong></td>
+      <th style="width: 20%;">System Work ID</th>
+      <td style="width: 30%;"><code>{work_id}</code></td>
+    </tr>
+    <tr>
+      <th>Member of Parliament</th>
+      <td><strong>{mp_name}</strong></td>
+      <th>Work Category</th>
+      <td>{category}</td>
+    </tr>
+    <tr>
+      <th>Constituency & District</th>
+      <td>{constituency}, {district}</td>
+      <th>State / UT</th>
+      <td><strong>{state}</strong></td>
+    </tr>
+    <tr>
+      <th>Current Work Stage</th>
+      <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{stage}</span></td>
+      <th>Review Status</th>
+      <td><strong>{review_status}</strong></td>
+    </tr>
+    <tr>
+      <th>Recorded Description</th>
+      <td colspan="3" style="line-height: 1.4; color: #0f172a;">{desc}</td>
+    </tr>
+  </table>
+
+  <div class="section-title">2. Financial Realization & Milestone Balances</div>
+  <table class="data-table">
+    <tr>
+      <th style="width: 25%;">Recommended Cost</th>
+      <th style="width: 25%;">Sanctioned Cost</th>
+      <th style="width: 25%;">Completed Cost</th>
+      <th style="width: 25%;">Disbursed Expenditure</th>
+    </tr>
+    <tr>
+      <td style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">{rec_cost}</td>
+      <td style="font-size: 1.05rem; font-weight: 700; color: #0284c7;">{sanc_cost}</td>
+      <td style="font-size: 1.05rem; font-weight: 700; color: #16a34a;">{comp_cost}</td>
+      <td style="font-size: 1.05rem; font-weight: 700; color: #d97706;">{disb_cost}</td>
+    </tr>
+  </table>
+
+  <div class="section-title">3. Multi-Engine Diagnostic Breakdown (Availability-Normalized)</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 28%;">Diagnostic Module</th>
+        <th style="width: 12%;">Weight</th>
+        <th style="width: 14%;">Score</th>
+        <th style="width: 46%;">Diagnostic Findings & Verification Basis</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Peer Benchmarking</strong></td>
+        <td>30%</td>
+        <td><strong>{p_score}</strong></td>
+        <td>{p_ev} &bull; Median: {p_median} ({p_pctile}) &bull; Cohort: {p_cohort}</td>
+      </tr>
+      <tr>
+        <td><strong>2. Statistical Outliers</strong></td>
+        <td>25%</td>
+        <td><strong>{s_score}</strong></td>
+        <td>{s_ev}</td>
+      </tr>
+      <tr>
+        <td><strong>3. Financial Mismatch</strong></td>
+        <td>30%</td>
+        <td><strong>{m_score}</strong></td>
+        <td>{m_ev} &bull; Tier: {m_conf}</td>
+      </tr>
+      <tr>
+        <td><strong>4. Duplicate / Overlap</strong></td>
+        <td>15%</td>
+        <td><strong>{d_score}</strong></td>
+        <td>{d_ev}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">4. Action Protocols & Field Verification Checklist</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;">
+      <div style="font-weight: 700; font-size: 0.84rem; color: #0284c7; text-transform: uppercase; margin-bottom: 8px;">
+        📁 Administrative & Desk Review Protocol
+      </div>
+      <ul class="checklist">
+        {desk_checklist_html}
+      </ul>
+    </div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;">
+      <div style="font-weight: 700; font-size: 0.84rem; color: #059669; text-transform: uppercase; margin-bottom: 8px;">
+        📍 Field & Asset Inspection Protocol
+      </div>
+      <ul class="checklist">
+        {field_checklist_html}
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">5. Investigator Review Status & Observational Notes</div>
+  <div style="display: flex; gap: 16px; margin-bottom: 10px;">
+    <div><strong>Assigned Review Status:</strong> <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-weight: 700;">{review_status}</span></div>
+  </div>
+  <div class="notes-box">
+    <strong>Auditor Notes:</strong><br>
+    {clean_notes}
+  </div>
+
+  <div class="sign-grid">
+    <div>
+      <div><strong>Desk / Field Auditor:</strong></div>
+      <div class="sign-line"></div>
+      <div style="margin-top: 4px; color: #64748b;">Name & Designation</div>
+    </div>
+    <div>
+      <div><strong>Supervisory Approval:</strong></div>
+      <div class="sign-line"></div>
+      <div style="margin-top: 4px; color: #64748b;">Signature & Date</div>
+    </div>
+  </div>
+
+  <div class="legal-notice">
+    <strong>CONFIDENTIAL ADMINISTRATIVE SCREENING NOTICE:</strong> This memorandum is generated automatically by MPPrisma based on authentic Government of India MoSPI public records. Indicators highlight statistical anomalies and milestone variances for targeted review; they do NOT constitute formal allegations or evidence of fraud, criminality, or guilt. Physical verification is mandatory prior to administrative action.
+  </div>
+</div>
+
+</body>
+</html>"""
+    return html
+

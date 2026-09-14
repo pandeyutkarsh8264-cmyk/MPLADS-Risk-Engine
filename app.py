@@ -13,6 +13,8 @@ Provides:
 """
 
 import sys
+import json
+import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -42,6 +44,7 @@ from src.ui_helpers import (
     synthesize_plain_language_narrative,
     render_risk_drivers_html,
     render_duplicate_comparison_html,
+    generate_inspection_dossier_html,
     RISK_COLORS
 )
 from src.peer_benchmark import PeerBenchmarkEngine
@@ -374,6 +377,51 @@ with tab_queue:
     st.markdown("Prioritized worklist — start with projects requiring the most attention.")
     st.markdown("Sortable register of evaluated projects prioritized by composite risk score.")
 
+    # Quick Scenario Presets (derived strictly from existing authoritative fields)
+    if "queue_scenario_preset" not in st.session_state:
+        st.session_state["queue_scenario_preset"] = "All Projects"
+
+    preset_options = [
+        "All Projects",
+        "Critical / High Risk",
+        "Low Evidence Coverage",
+        "Semantic Overlap",
+        "Financial–Execution Signals"
+    ]
+
+    col_pres_l, col_pres_r = st.columns([4, 1])
+    with col_pres_l:
+        current_preset = st.session_state["queue_scenario_preset"]
+        selected_preset = st.radio(
+            "⚡ Quick Scenario Presets",
+            preset_options,
+            index=preset_options.index(current_preset) if current_preset in preset_options else 0,
+            horizontal=True,
+            key="radio_queue_preset",
+            help="Filter queue instantly by key investigative anomaly scenarios derived from authoritative fields."
+        )
+        st.session_state["queue_scenario_preset"] = selected_preset
+    with col_pres_r:
+        st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+        if selected_preset != "All Projects":
+            if st.button("✕ Clear Preset", key="btn_clear_preset"):
+                st.session_state["queue_scenario_preset"] = "All Projects"
+                st.rerun()
+
+    # Apply Quick Scenario Preset to df_filtered
+    df_queue = df_filtered.copy()
+    if selected_preset == "Critical / High Risk":
+        df_queue = df_queue[df_queue["risk_band"].isin(["CRITICAL", "HIGH"])]
+    elif selected_preset == "Low Evidence Coverage":
+        df_queue = df_queue[df_queue["available_weight_pct"] < 60.0]
+    elif selected_preset == "Semantic Overlap":
+        df_queue = df_queue[df_queue["duplicate_score"].notna() & (df_queue["duplicate_score"] > 0)]
+    elif selected_preset == "Financial–Execution Signals":
+        df_queue = df_queue[df_queue["mismatch_score"].notna() & (df_queue["mismatch_score"] > 0)]
+
+    if selected_preset != "All Projects":
+        st.markdown(f"<div style='font-size: 0.8rem; color: #38bdf8; margin-bottom: 8px;'>Active preset: <strong>{selected_preset}</strong> ({len(df_queue):,} matching works)</div>", unsafe_allow_html=True)
+
     col_sort_l, col_sort_m, col_sort_r = st.columns([2, 2, 2])
     with col_sort_l:
         top_n = st.selectbox("Display Count", [50, 100, 250, 500, "All Matching"], index=0)
@@ -384,7 +432,7 @@ with tab_queue:
         show_engine_scores = st.checkbox("Show individual engine columns", value=False)
 
     # Apply sorting with safe NaN handling
-    df_sorted = df_filtered.copy()
+    df_sorted = df_queue.copy()
     if "Risk Score" in sort_order:
         df_sorted = df_sorted.sort_values(by="risk_score", ascending=False, na_position="last")
     elif "Recommended Amount" in sort_order:
@@ -668,6 +716,84 @@ with tab_investigate:
             else:
                 for act in work_risk.investigation_actions[len(work_risk.investigation_actions)//2 or 1:]:
                     st.markdown(f'<div class="action-box-field">🔍 {act}</div>', unsafe_allow_html=True)
+
+        # 8. INVESTIGATOR REVIEW STATUS, NOTES & EXPORT ACTIONS
+        st.markdown("---")
+        st.markdown("#### 📋 Investigator Review & Action Management")
+        st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-top: -8px;'>Assign session-level review classification, record observational notes, and export official inspection dossiers or audit records.</p>", unsafe_allow_html=True)
+
+        if "investigator_review_status" not in st.session_state:
+            st.session_state["investigator_review_status"] = {}
+        if "investigator_notes" not in st.session_state:
+            st.session_state["investigator_notes"] = {}
+
+        col_rev_l, col_rev_r = st.columns([1, 2])
+        with col_rev_l:
+            status_options = ["Pending Review", "Escalated for Field Inspection", "Cleared / Conforming"]
+            current_status = st.session_state["investigator_review_status"].get(target_dtl_id, "Pending Review")
+            new_status = st.selectbox(
+                "Investigator Review Status",
+                status_options,
+                index=status_options.index(current_status) if current_status in status_options else 0,
+                key=f"status_sel_{target_dtl_id}"
+            )
+            st.session_state["investigator_review_status"][target_dtl_id] = new_status
+
+        with col_rev_r:
+            current_notes = st.session_state["investigator_notes"].get(target_dtl_id, "")
+            new_notes = st.text_area(
+                "Investigator Notes",
+                value=current_notes,
+                placeholder="Enter observational audit notes, desk review findings, or specific inspection directives for this session...",
+                key=f"notes_ta_{target_dtl_id}",
+                height=95
+            )
+            st.session_state["investigator_notes"][target_dtl_id] = new_notes
+
+        col_exp_1, col_exp_2 = st.columns(2)
+        with col_exp_1:
+            dossier_html = generate_inspection_dossier_html(
+                work_risk=work_risk,
+                work_record=work_record,
+                p_res=p_res,
+                s_res=s_res,
+                m_res=m_res,
+                d_res=d_res,
+                review_status=new_status,
+                review_notes=new_notes
+            )
+            st.download_button(
+                label="📄 Export Inspection Dossier",
+                data=dossier_html,
+                file_name=f"inspection_dossier_DTL_{target_dtl_id}.html",
+                mime="text/html",
+                use_container_width=True
+            )
+
+        with col_exp_2:
+            audit_record = {
+                "work_recommendation_dtl_id": target_dtl_id,
+                "work_id": work_record.get("work_id", f"DTL_{target_dtl_id}"),
+                "state": work_record.get("state", "Unavailable"),
+                "constituency": work_record.get("constituency", "Unavailable"),
+                "district": work_record.get("district", "Unavailable"),
+                "mp_name": work_record.get("mp_name", "Unavailable"),
+                "category": work_record.get("category", "Unavailable"),
+                "work_description": work_record.get("work_description", "Unavailable"),
+                "risk_score": round(float(work_risk.risk_score), 2) if work_risk.risk_score is not None else None,
+                "risk_band": work_risk.risk_band,
+                "evidence_coverage_pct": round(float(work_risk.evidence_coverage.get("available_weight_pct", 0.0)), 1),
+                "investigator_review_status": new_status,
+                "investigator_notes": new_notes,
+                "session_timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }
+            st.download_button(
+                label="📊 Export Review Record",
+                data=json.dumps(audit_record, indent=2, ensure_ascii=False),
+                file_name=f"audit_review_DTL_{target_dtl_id}.json",
+                mime="application/json",
+                use_container_width=True
+            )
 
 
 # =============================================================================
