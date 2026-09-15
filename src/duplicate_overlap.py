@@ -21,7 +21,8 @@ NOTE: Similarity thresholds are first-pass calibrated/tunable prototype values,
 NOT locked specification constants or statistically validated probabilities.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+import re
+from typing import Dict, Any, List, Optional, Tuple, Set
 from collections import defaultdict
 import numpy as np
 
@@ -34,6 +35,66 @@ try:
     from rapidfuzz import fuzz
 except ImportError:
     fuzz = None
+
+
+# Comprehensive administrative, construction, facility, stop-word, and patronymic filter
+EXPANDED_GENERIC_TOKENS = {
+    # 1. Actions, operations & status
+    "construction", "installation", "supply", "erection", "providing", "fixing",
+    "laying", "fitting", "drilling", "purchase", "reconstruction", "maintenance",
+    "repair", "infrastructure", "development", "desilting", "work", "works", "karya", "kam", "kaam", "nirman",
+    "continued", "continue", "countinue", "completed", "completion", "ongoing", "scheme", "yojana", "project",
+    "cleaning", "deepening", "renovation", "beautification", "upgradation", "extension",
+
+    # 2. Facility types & infrastructure objects
+    "community", "hall", "bhavan", "bhawan", "samudya", "cultural", "kendra", "center", "centre", "facility",
+    "light", "lights", "solar", "mast", "mini", "semi", "led", "street", "mask", "pole", "lamp", "bulb",
+    "road", "roads", "cc", "pcc", "cement", "concrete", "paver", "block", "blocks", "drain", "drainage", "drainages",
+    "wall", "boundary", "compound", "cemetery", "graveyard", "muktidham", "shamshan", "shed", "shade", "shades",
+    "handpump", "pump", "bore", "well", "kuva", "kuvanu", "water", "tanker", "tank", "tenkar", "harvesting", "harwesting",
+    "library", "smart", "panels", "panel", "speakers", "amplifier", "amplifiers", "gym", "benches", "shelf", "books", "book",
+    "room", "rooms", "classroom", "classrooms", "building", "katch", "gate", "gatekeeper", "fencing",
+    "stadium", "court", "playground", "ground", "park", "garden", "toilet", "toilets", "sanitation", "shauchalay",
+    "pipe", "pipeline", "submersible", "motor", "rcc", "pvc", "tin", "roof", "roofing", "track", "pavement",
+
+    # 3. Administrative units, levels & prepositions
+    "near", "beside", "opposite", "opp", "from", "to", "at", "in", "of", "and", "the", "for", "by", "with",
+    "under", "per", "as", "ke", "ka", "ki", "ko", "me", "se", "par", "samne", "pass", "pas", "avel", "hetu", "khat", "khate",
+    "village", "vill", "gram", "panchayat", "gam", "game", "gavn", "gaon", "tq", "taluk", "block", "ward", "dist", "district",
+    "area", "areas", "rural", "urban", "list", "public", "govt", "government", "sarkari", "gp", "colony", "mohalla", "tola",
+    "faliya", "faliyama", "avas", "mandi", "bazar", "bazaar", "junction", "nagar", "pur", "gali",
+    "prathmik", "madhyamik", "uchch", "primary", "secondary", "higher", "senior", "vidyalay", "school", "highschool", "college",
+    "arogya", "swasthya", "health", "hospital", "dispensary", "subcenter", "subcentre",
+
+    # 4. Grammatical particles, regional words & abbreviations
+    "no", "num", "number", "nos", "pry", "pr", "priority", "item", "sl", "serial", "stretch", "strecth",
+    "km", "meter", "mtr", "feet", "inch", "sq", "sqm", "sqft", "hi", "high", "fixed", "equipment", "upak",
+    "nu", "na", "ni", "ane", "ma", "chhe", "khedi", "sangam", "wada", "enc", "attachment", "enclosed",
+    "temple", "mandir", "math", "masjid", "church", "st", "sc",
+
+    # 5. Honorifics, relationship markers & common Indian patronymics / caste titles
+    "shri", "smt", "dr", "late", "mr", "mrs", "miss", "son", "daughter", "wife", "s/o", "d/o", "w/o", "father", "mother",
+    "babu", "bhai", "ben", "ji", "saheb", "sahab", "pradhan", "mukhiya", "sarpanch", "member",
+    "kumar", "singh", "sharma", "yadav", "patel", "prasad", "ram", "lal", "das", "devi", "shah", "ali", "khan",
+    "gupta", "verma", "saroj", "paswan", "mahto", "mandal", "rawat", "chaudhary", "rathore", "thakur", "pandey",
+    "mishra", "joshi", "shukla", "tiwari", "dubey", "chaubey", "reddy", "rao", "nair", "menon", "shetty", "gowda",
+    "patil", "jadhav", "shinde", "deshmukh", "kadam", "pawar", "sawant", "more", "kale", "chavan", "add", "house", "ghar"
+}
+
+
+def extract_content_tokens(text: str) -> Set[str]:
+    """Extracts strictly discriminative tokens (local place names, distinct landmarks, specific codes) excluding generic terminology."""
+    tokens = re.findall(r'[a-zA-Z0-9]+', str(text).lower())
+    distinctive = set()
+    for t in tokens:
+        if len(t) < 3:
+            continue
+        if t in EXPANDED_GENERIC_TOKENS:
+            continue
+        if t.isdigit() and len(t) < 3:
+            continue
+        distinctive.add(t)
+    return distinctive
 
 
 class DuplicateOverlapEngine:
@@ -251,6 +312,7 @@ class DuplicateOverlapEngine:
 
             # RapidFuzz entity/agency similarity
             agency_sim = self._compute_agency_similarity(auth_work, cand_auth)
+            agency_agreed = (agency_sim >= self.entity_fuzzy_threshold)
 
             # MP contextual agreement
             same_mp = (mp_work != "" and mp_work == cand_mp)
@@ -263,22 +325,54 @@ class DuplicateOverlapEngine:
                 similar_amt = False
                 amt_diff_ratio = 1.0
 
-            # Combined Classification using semantic similarity + contextual agreement
-            if semantic_sim >= self.semantic_verbatim_threshold:
-                # Verbatim or near-identical text inside same block
+            # Content tokens and string similarities for specificity verification
+            verbatim_ratio = float(fuzz.ratio(desc.lower().strip(), cand_desc.lower().strip())) if fuzz is not None else 0.0
+            token_set_ratio = float(fuzz.token_set_ratio(desc.lower(), cand_desc.lower())) if fuzz is not None else 0.0
+
+            c_tokens_target = extract_content_tokens(desc)
+            c_tokens_cand = extract_content_tokens(cand_desc)
+            if c_tokens_target and c_tokens_cand:
+                shared_content = c_tokens_target & c_tokens_cand
+                content_jaccard = len(shared_content) / len(c_tokens_target | c_tokens_cand)
+                content_count = len(shared_content)
+            else:
+                shared_content = set()
+                content_jaccard = 0.0
+                content_count = 0
+
+            # Combined Calibrated Classification using specificity & contextual agreement
+            # TIER 1: NEAR-VERBATIM (Near-exact / identical copy of work description inside same block)
+            if (semantic_sim >= self.semantic_verbatim_threshold and (verbatim_ratio >= 90.0 or token_set_ratio >= 95.0)) or \
+               (semantic_sim >= 0.90 and token_set_ratio >= 95.0 and agency_agreed):
                 classification = "Likely duplicate"
                 likely_count += 1
                 match_weight = 90.0
-            elif semantic_sim >= self.semantic_threshold_likely and (same_mp or agency_sim >= self.entity_fuzzy_threshold or similar_amt):
-                # Strong semantic match with contextual agreement
-                classification = "Likely duplicate"
-                likely_count += 1
-                match_weight = 85.0
+            # TIER 2: HIGH COSINE + GENUINE IDENTIFYING SPECIFICITY MATCH
+            elif semantic_sim >= self.semantic_threshold_likely and agency_agreed:
+                has_strong_entity_match = (
+                    (content_count >= 2 and content_jaccard >= 0.35) or
+                    (content_count >= 3) or
+                    (content_count >= 1 and content_jaccard >= 0.50 and token_set_ratio >= 85.0)
+                )
+                if has_strong_entity_match:
+                    classification = "Likely duplicate"
+                    likely_count += 1
+                    match_weight = 85.0
+                else:
+                    classification = "Possible overlap"
+                    possible_count += 1
+                    match_weight = 50.0 if (similar_amt and agency_agreed) else 40.0
+            # TIER 3: TEMPLATE SIMILARITY ACROSS DIFFERENT LOCALITIES (Programmatic Peers)
             elif semantic_sim >= self.semantic_threshold_possible:
-                # Moderate semantic match within same block
                 classification = "Possible overlap"
                 possible_count += 1
-                match_weight = 60.0 if (same_mp or similar_amt) else 45.0
+                if similar_amt and agency_agreed:
+                    match_weight = 50.0
+                elif similar_amt or agency_agreed:
+                    match_weight = 40.0
+                else:
+                    match_weight = 30.0
+            # TIER 4: UNRELATED
             else:
                 classification = "Unrelated"
                 match_weight = 0.0
@@ -297,23 +391,28 @@ class DuplicateOverlapEngine:
                     "similar_amount": similar_amt,
                     "amount_difference_ratio": round(amt_diff_ratio, 3),
                     "classification": classification,
-                    "match_weight": match_weight
+                    "match_weight": match_weight,
+                    "shared_identifying_entities": list(shared_content)
                 })
 
         matches.sort(key=lambda m: (-m["match_weight"], -m["semantic_cosine_similarity"]))
         top_matches = matches[:5]
 
-        # Calculate module score
+        # Calculate module score with conservative programmatic escalation
         reason_codes = []
         if likely_count > 0:
             top_weight = top_matches[0]["match_weight"]
-            score = min(100.0, top_weight + min(10.0, (likely_count - 1) * 3.0))
+            # Escalation applies only when multiple confirmed likely duplicates exist
+            escalation = min(10.0, (likely_count - 1) * 2.5)
+            score = min(100.0, top_weight + escalation)
             reason_codes.append("DUPLICATE_LIKELY_MATCH_FOUND")
             if likely_count > 1:
                 reason_codes.append("DUPLICATE_MULTIPLE_LIKELY_MATCHES")
         elif possible_count > 0:
             top_weight = top_matches[0]["match_weight"]
-            score = min(75.0, top_weight + min(15.0, (possible_count - 1) * 2.0))
+            # Programmatic template peers are bounded and cannot escalate into High/Critical band
+            escalation = min(10.0, (possible_count - 1) * 1.5)
+            score = min(60.0, top_weight + escalation)
             reason_codes.append("DUPLICATE_POSSIBLE_OVERLAP_FOUND")
         else:
             score = 0.0
